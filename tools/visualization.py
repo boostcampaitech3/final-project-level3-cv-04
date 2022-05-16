@@ -23,7 +23,7 @@ def draw_polygon(img: Image, pts, tags,tag_ori):
     """이미지에 폴리곤을 그린다. illegibility의 여부에 따라 라인 색상이 다르다."""
     img_draw = ImageDraw.Draw(img)
 
-    font = ImageFont.truetype("fonts/NanumSquareRoundB.ttf",size=20)
+    font = ImageFont.truetype(arg.font_path,size=20)
     # img_draw.rectangle([(pts[0][0],pts[0][1]-20),(pts[0][0]+200,pts[0][1]-20+20)], fill='yellow')
     img_draw.text((pts[0][0],pts[0][1]-20),tags,(0,0,0),font,align='left')
 
@@ -155,9 +155,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-ho','--host',default='0.0.0.0')
     parser.add_argument('-p','--port',default='4000')
-    parser.add_argument('-i','--image_path',default='../datas/real_data/ljh')
-    parser.add_argument('-r','--row',default=2,help='')
-    parser.add_argument('-c','--column',default=2,help='')
+    parser.add_argument('-i','--image_path',default='/opt/ml/upstage_OCR/datas/Data set/real data/general')
+    parser.add_argument('-f','--font_path',default='/opt/ml/upstage_OCR/tools/fonts/NanumSquareRoundB.ttf')
+    parser.add_argument('-r','--row',default=2)
+    parser.add_argument('-c','--column',default=2)
     parser.add_argument('-iw','--img_width',default='800px')
     parser.add_argument('-ih','--img_height',default=1000)
     parser.add_argument('-im','--instant_mode',default=True)
