@@ -64,6 +64,11 @@ def wifi_image_generation():
     text_color = (0, 0, 0)
     
     # Load image & annotation
+    image_id = 0
+    box_id = 1
+    coco_img_list = []
+    coco_ann_list = []
+
     img_list = os.listdir(img_path)
     for img_name in tqdm(img_list):
 
@@ -76,7 +81,9 @@ def wifi_image_generation():
         pos_y_gen_pw = min(pos_pw_key[0][1], pos_pw_key[1][1])
 
         for n in range(num_img):
+            image_id += 1
             template_img = Image.open(filename)
+            img_width, img_height = template_img.size
 
             # 생성할 문자열의 좌상단 좌표, key와의 margin을 random값으로 지정(10~20 pixels)
             pos_id_value = [pos_x_gen_id + random.randint(10, 20), pos_y_gen_id] 
@@ -97,8 +104,10 @@ def wifi_image_generation():
                 text_pw = random_text()
 
             # Starting Coordinates:(0,0) in the upper left corner, Text, Text color: RGB, Font style
-            image_editable.text(pos_id_value, text_id, text_color, font=font) # ID
-            image_editable.text(pos_pw_value, text_pw, text_color, font=font) # PW
+            gen_id_bbox = image_editable.textbbox(pos_id_value, text_id, font=font) # (x0,y0,x2,y2)
+            gen_pw_bbox = image_editable.textbbox(pos_pw_value, text_pw, font=font) # (x0,y0,x2,y2)
+            image_editable.text(gen_id_bbox, text_id, text_color, font=font) # ID
+            image_editable.text(gen_pw_bbox, text_pw, text_color, font=font) # PW
 
             # Export the result
             export_dir = './gen_imgs'
@@ -106,9 +115,127 @@ def wifi_image_generation():
                 os.mkdir(export_dir)
             export_filename = img_name[0:img_name.rfind('.')] + '_' + str(n).zfill(2) +'.jpg'
             template_img.save('/'.join([export_dir, export_filename]))
-    
+
+            # Make COCO format annotation
+            coco_img_list.append(coco_img(image_id, img_width, img_height, export_filename))
+            box_id, ann_info = coco_ann(gen_id_bbox, gen_pw_bbox, box_id, image_id)
+            coco_ann_list.extend(ann_info)
+
     print(f'{len(img_list) * num_img} wifi images generated')
 
+    coco_dataset = coco_template()
+    coco_dataset['images'] = coco_img_list
+    coco_dataset['annotations'] = coco_ann_list
+    anno_dir = './gen_imgs/annotations'
+    if os.path.isdir(anno_dir) == False:
+        os.mkdir(anno_dir)
+    with open('./gen_imgs/annotations/anno.json','w') as f:
+        json.dump(coco_dataset, f, indent=4)
+    print('COCO format annotations file generated')
+
+def coco_template():
+    coco_dataset = {
+    "licenses": [
+        {
+        "name": "",
+        "id": 0,
+        "url": ""
+        }
+    ],
+    "info": {
+        "contributor": "",
+        "date_created": "",
+        "description": "",
+        "url": "",
+        "version": "",
+        "year": ""
+    },
+    "categories": [
+        {
+        "id": 1,
+        "name": "ID",
+        "supercategory": ""
+        },
+        {
+        "id": 2,
+        "name": "PW",
+        "supercategory": ""
+        }
+    ]
+    }
+    return coco_dataset
+
+def convert_coco_bbox(bbox):
+    width = bbox[2] - bbox[0] 
+    height = bbox[3] - bbox[1]
+    
+    return [bbox[0], bbox[1], width, height], width * height
+
+def coco_img(image_id, width, height, filename): 
+    img_info = {
+      "id": image_id,
+      "width": width,
+      "height": height,
+      "file_name": filename,
+      "license": 0,
+      "flickr_url": "",
+      "coco_url": "",
+      "date_captured": 0
+    }
+    return img_info
+
+def coco_ann(id_bbox, pw_bbox, box_id, image_id):
+
+    id_bbox, id_area = convert_coco_bbox(id_bbox)
+    pw_bbox, pw_area = convert_coco_bbox(pw_bbox)
+
+    ann_info = [{
+      "id": box_id,
+      "image_id": image_id,
+      "category_id": 1, # ID
+      "segmentation": [
+        [
+        #   142.04,
+        #   170.44,
+        #   192.11,
+        #   170.02,
+        #   191.69,
+        #   182.22,
+        #   141.62,
+        #   181.38
+        ]
+      ],
+      "area": id_area,
+      "bbox": id_bbox,
+      "iscrowd": 0,
+      "attributes": {
+        "occluded": False
+      }
+    },
+    {
+      "id": box_id+1,
+      "image_id": image_id,
+      "category_id": 2, # PW
+      "segmentation": [
+        [
+        #   142.04,
+        #   170.44,
+        #   192.11,
+        #   170.02,
+        #   191.69,
+        #   182.22,
+        #   141.62,
+        #   181.38
+        ]
+      ],
+      "area": pw_area,
+      "bbox": pw_bbox,
+      "iscrowd": 0,
+      "attributes": {
+        "occluded": False
+      }
+    }]
+    return box_id + 2, ann_info
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
