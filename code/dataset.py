@@ -5,6 +5,8 @@ import numpy as np
 import requests
 from pycocotools.coco import COCO
 from PIL import Image, ImageOps
+import os
+from tqdm import tqdm
 
 
 id_list = ['ID', 'ID:', '아이디', 'NETWORK', '네트워크']
@@ -65,10 +67,6 @@ def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
     for ann in coco.anns.values():
         if any(map(lambda x: x in ann['text'],key_list)):
             c2[0][coco.annToMask(ann) == 1] = ann['category_id']
-            print('key :', ann['text'])
-        else:
-            print('passed :', ann['text'])
-            pass
 
     c1 = torch.from_numpy(c1)
     c2 = torch.from_numpy(c2)
@@ -77,9 +75,9 @@ def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
     return out
 
 
-
-class WifiDataset(Dataset):
-    def __init__(self,ann_path:str,api_url):
+class WifiDataset_segmentation(Dataset):
+    def __init__(self,ann_path,api_url,image_root,device):
+        self.img_root = image_root
         self.coco = COCO(ann_path)
         self.api_url = api_url
         self.img_names = []
@@ -90,15 +88,20 @@ class WifiDataset(Dataset):
             for ann_id in self.coco.getAnnIds(img_id):
                 self.anns[-1].append(self.coco.loadAnns(ann_id))
 
+        self.x_list = []
+        self.y_list = []
+        print('load images ...')
+        for img_name,ann_list in tqdm(zip(self.img_names,self.anns),total=len(self.img_names)):
+            img_name = img_name[0]['file_name']
+            x = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
+            y = torch.zeros((1,x.shape[1],x.shape[2]))
+            for ann in ann_list:
+                y[0][self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
+            self.x_list.append(x.to(device))
+            self.y_list.append(y.to(device))
+
     def __len__(self):
         return len(self.img_names)
     
     def __getitem__(self, idx):
-        img_name = self.img_names[idx]
-        ann_list= self.anns[idx]
-        x = img_to_focusmask(img_name,self.api_url)
-
-        y = torch.zeros((1,x.shape(1),x.shape(2)))
-        for ann in ann_list:
-            y[0][self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
-        return x, y
+        return self.x_list[idx], self.y_list[idx]
