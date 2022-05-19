@@ -138,7 +138,8 @@ def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
 
 
 class WifiDataset_segmentation(Dataset):
-    def __init__(self,ann_path,api_url,image_root,device):
+    def __init__(self,ann_path,api_url,image_root,transform = None):
+        self.transfrom = transform
         self.img_root = image_root
         self.coco = COCO(ann_path)
         self.api_url = api_url
@@ -156,11 +157,18 @@ class WifiDataset_segmentation(Dataset):
         for img_name,ann_list in tqdm(zip(self.img_names,self.anns),total=len(self.img_names)):
             img_name = img_name[0]['file_name']
             x = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
-            y = torch.zeros((1,x.shape[1],x.shape[2]))
+            y = torch.zeros((x.shape[1],x.shape[2]))
             for ann in ann_list:
-                y[0][self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
-            self.x_list.append(x.to(device))
-            self.y_list.append(y.to(device))
+                y[self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
+
+            if self.transfrom:
+                transformed = self.transfrom(
+                    image=np.array(x.reshape(x.shape[1],x.shape[2],3)),
+                    mask=np.array(y))
+                x = transformed['image']
+                y = transformed['mask']
+            self.x_list.append(x.type(torch.FloatTensor))
+            self.y_list.append(y.type(torch.LongTensor))
 
     def __len__(self):
         return len(self.img_names)
