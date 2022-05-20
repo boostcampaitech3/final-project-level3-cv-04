@@ -12,18 +12,18 @@ import model
 import loss
 
 
-ann_path = '/opt/ml/upstage_OCR/Data set/annotations/general_00_10.json'
-ann_path_val = '/opt/ml/upstage_OCR/Data set/annotations/general_46_60.json'
+ann_path = '/opt/ml/upstage_OCR/Data set/annotations/general_00_10+46_78.json'
+ann_path_val = '/opt/ml/upstage_OCR/Data set/annotations/general_00_10.json'
 ocr_url = "http://118.222.179.32:30000/ocr/"
 image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 sorted_df = pd.DataFrame({'Categories':['background','ID','PW']})
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-num_epochs = 10000
+num_epochs = 1000
 batch_size = 4
-val_every = 100
+val_every = 10
 
-saved_dir = './saved/unet_focal'
+saved_dir = './saved/unet_focal_2'
 if not os.path.isdir(saved_dir):                                                           
     os.mkdir(saved_dir)
 
@@ -69,7 +69,7 @@ def train(num_epochs, model, data_loader, val_loader, criterion, optimizer, save
         model.train()
         torch.save(model,f'{saved_dir}/model.pt')
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks) in enumerate(data_loader):
+        for step, (images, masks, _) in enumerate(data_loader):
             images = torch.stack(images)       
             masks = torch.stack(masks).long() 
             
@@ -121,7 +121,7 @@ def validation(epoch, model, data_loader, criterion, device):
         cnt = 0
         
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks) in enumerate(data_loader):
+        for step, (images, masks, _) in enumerate(data_loader):
             
             images = torch.stack(images)       
             masks = torch.stack(masks).long()  

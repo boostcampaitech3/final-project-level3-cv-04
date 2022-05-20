@@ -85,8 +85,7 @@ def get_ann(img_path:str,api_url:str) -> dict:
 
 def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
     image = Image.open(image_path)
-    image = ImageOps.exif_transpose(image)
-
+    image = ImageOps.exif_transpose(image).convert('RGB')
     image = torchvision.transforms.ToTensor()(image)
     image_gray = torchvision.transforms.Grayscale()(image)
 
@@ -153,6 +152,7 @@ class WifiDataset_segmentation(Dataset):
 
         self.x_list = []
         self.y_list = []
+        self.meta_list = []
         print('load images ...')
         for img_name,ann_list in tqdm(zip(self.img_names,self.anns),total=len(self.img_names)):
             img_name = img_name[0]['file_name']
@@ -174,4 +174,4 @@ class WifiDataset_segmentation(Dataset):
         return len(self.img_names)
     
     def __getitem__(self, idx):
-        return self.x_list[idx], self.y_list[idx]
+        return self.x_list[idx], self.y_list[idx], self.img_names[idx]
