@@ -6,6 +6,8 @@ import random
 import os
 from tqdm import tqdm
 import requests
+import numpy as np
+
 
 def random_text():
     string_pool = string.ascii_letters + string.digits + string.punctuation
@@ -44,14 +46,37 @@ def get_keys(ann):
 
     return position_id, position_pw
 
-def get_text_color(template_img, pos_id_key):
+def get_text_color(template_img, pos_id_key, gen_id_bbox):
     pix = template_img.load()
-    x, y = pos_id_key[0]
-    pix_rgb = pix[x,y]
-    
-    # print(pix_rgb)
-    # text_color = pix_rgb[0:3]
-    return pix_rgb
+    x1, y1 = pos_id_key[0]
+    x2, y2 = pos_id_key[2]
+    x1_, y1_ = gen_id_bbox[0], gen_id_bbox[1]
+    x2_, y2_ = gen_id_bbox[2], gen_id_bbox[3]
+
+    color_list = []
+    for i in range(x1, x2+1): # ID bbox의 pixel값들 저장
+        for j in range(y1, y2+1):
+            if not isinstance(pix[i,j], int) and len(pix[i,j]) == 4:
+                pix_c = (pix[i,j][0:3])
+            else:
+                pix_c = pix[i,j]
+            color_list.append(pix_c)
+
+    for i in range(x1_, x2_+1): # 생성할 위치의 bbox의 pixel값들 저장(배경 관련 rgb값을 더해주기 위한 목적)
+        for j in range(y1_, y2_+1):
+            if not isinstance(pix[i,j], int) and len(pix[i,j]) == 4:
+                pix_c = (pix[i,j][0:3])
+            else:
+                pix_c = pix[i,j]
+            color_list.append(pix_c)
+    color_list_ = np.array(color_list)
+    mean_color = np.mean(color_list_, 0) # 배경색과 가까운 rgb 평균값을 얻을 수 있음.
+    d_list = []
+    for color in color_list_:
+        D = np.sqrt(np.sum((color - mean_color) ** 2)) # 평균과 각 색과의 유클리드 거리 계산
+        d_list.append(D)
+    ind = d_list.index(max(d_list)) # 평균 색에서 가장 거리가 먼 색을 text color라 가정
+    return color_list[ind]
 
 def wifi_image_generation():
 
@@ -94,7 +119,6 @@ def wifi_image_generation():
             fontfile = font_path + '/' + random.choice(font_list)
             text_size = max(pos_id_key[3][1] - pos_id_key[0][1], pos_id_key[2][1] - pos_id_key[1][1])
             font = ImageFont.truetype(fontfile, text_size)
-            text_color = get_text_color(template_img, pos_id_key)
 
             # Render the Text
             image_editable = ImageDraw.Draw(template_img) # Convert the image to an editable format
@@ -106,6 +130,7 @@ def wifi_image_generation():
             # Starting Coordinates:(0,0) in the upper left corner, Text, Text color: RGB, Font style
             gen_id_bbox = image_editable.textbbox(pos_id_value, text_id, font=font) # (x0,y0,x2,y2)
             gen_pw_bbox = image_editable.textbbox(pos_pw_value, text_pw, font=font) # (x0,y0,x2,y2)
+            text_color = get_text_color(template_img, pos_id_key, gen_id_bbox)
             image_editable.text(gen_id_bbox, text_id, text_color, font=font) # ID
             image_editable.text(gen_pw_bbox, text_pw, text_color, font=font) # PW
 
@@ -194,16 +219,12 @@ def coco_ann(id_bbox, pw_bbox, box_id, image_id):
       "image_id": image_id,
       "category_id": 1, # ID
       "segmentation": [
-        [
-        #   142.04,
-        #   170.44,
-        #   192.11,
-        #   170.02,
-        #   191.69,
-        #   182.22,
-        #   141.62,
-        #   181.38
-        ]
+          [
+          id_bbox[0], id_bbox[1],
+          id_bbox[0] + id_bbox[2], id_bbox[1],
+          id_bbox[0] + id_bbox[2], id_bbox[1] + id_bbox[3],
+          id_bbox[0], id_bbox[1] + id_bbox[3]
+          ]
       ],
       "area": id_area,
       "bbox": id_bbox,
@@ -217,16 +238,12 @@ def coco_ann(id_bbox, pw_bbox, box_id, image_id):
       "image_id": image_id,
       "category_id": 2, # PW
       "segmentation": [
-        [
-        #   142.04,
-        #   170.44,
-        #   192.11,
-        #   170.02,
-        #   191.69,
-        #   182.22,
-        #   141.62,
-        #   181.38
-        ]
+          [
+          pw_bbox[0], pw_bbox[1],
+          pw_bbox[0] + pw_bbox[2], pw_bbox[1],
+          pw_bbox[0] + pw_bbox[2], pw_bbox[1] + pw_bbox[3],
+          pw_bbox[0], pw_bbox[1] + pw_bbox[3]
+          ]
       ],
       "area": pw_area,
       "bbox": pw_bbox,
