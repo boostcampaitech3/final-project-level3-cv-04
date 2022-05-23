@@ -137,41 +137,54 @@ def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
 
 
 class WifiDataset_segmentation(Dataset):
-    def __init__(self,ann_path,api_url,image_root,transform = None):
+    def __init__(self,ann_path,api_url,image_root,transform = None, preload = True):
         self.transfrom = transform
         self.img_root = image_root
         self.coco = COCO(ann_path)
         self.api_url = api_url
-        self.img_names = []
-        self.anns = []
+        self.preload = preload
+        self.img_metas = []             # 이미지별 메타 정보 list
+        self.anns = []                  # [[ann1-1, ann1-2], [ann2-1,ann2-2], ... ]
         for img_id in self.coco.getImgIds():
-            self.img_names.append(self.coco.loadImgs(img_id))
+            self.img_metas.append(self.coco.loadImgs(img_id))
             self.anns.append([])
             for ann_id in self.coco.getAnnIds(img_id):
                 self.anns[-1].append(self.coco.loadAnns(ann_id))
 
-        self.x_list = []
-        self.y_list = []
-        self.meta_list = []
-        print('load images ...')
-        for img_name,ann_list in tqdm(zip(self.img_names,self.anns),total=len(self.img_names)):
-            img_name = img_name[0]['file_name']
+        if preload == True:
+            self.x_list = []            # [img1,img2, ...]
+            self.y_list = []            # [mask1,mask2, ...]
+            print('load images ...')
+            for img_name,ann_list in tqdm(zip(self.img_metas,self.anns),total=len(self.img_metas)):
+                img_name = img_name[0]['file_name']
+                x = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
+                y = torch.zeros((x.shape[1],x.shape[2]))
+                for ann in ann_list:
+                    y[self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
+
+                self.x_list.append(x.type(torch.FloatTensor))
+                self.y_list.append(y.type(torch.LongTensor))
+
+    def __len__(self):
+        return len(self.img_metas)
+    
+    def __getitem__(self, idx):
+        meta = self.img_metas[idx]
+        if self.preload:
+            x = self.x_list[idx]
+            y = self.y_list[idx]
+        else:
+            ann_list = self.anns[idx]
+            img_name = meta[0]['file_name']
             x = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
             y = torch.zeros((x.shape[1],x.shape[2]))
             for ann in ann_list:
                 y[self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
 
-            if self.transfrom:
-                transformed = self.transfrom(
-                    image=np.array(x.reshape(x.shape[1],x.shape[2],3)),
-                    mask=np.array(y))
-                x = transformed['image']
-                y = transformed['mask']
-            self.x_list.append(x.type(torch.FloatTensor))
-            self.y_list.append(y.type(torch.LongTensor))
-
-    def __len__(self):
-        return len(self.img_names)
-    
-    def __getitem__(self, idx):
-        return self.x_list[idx], self.y_list[idx], self.img_names[idx]
+        if self.transfrom:
+            transformed = self.transfrom(
+                image=np.array(x.reshape(x.shape[1],x.shape[2],3)),
+                mask=np.array(y))
+            x = transformed['image'].type(torch.FloatTensor)
+            y = transformed['mask'].type(torch.LongTensor)
+        return x,y,meta

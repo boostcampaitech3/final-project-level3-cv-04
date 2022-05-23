@@ -12,18 +12,19 @@ import model
 import loss
 
 
-ann_path = '/opt/ml/upstage_OCR/Data set/annotations/general_00_10+46_78.json'
-ann_path_val = '/opt/ml/upstage_OCR/Data set/annotations/general_00_10.json'
+ann_path = '/opt/ml/upstage_OCR/Data set/annotations/general_00_78.json'
+ann_path_val = '/opt/ml/upstage_OCR/Data set/annotations/general_181_213.json'
 ocr_url = "http://118.222.179.32:30000/ocr/"
 image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 sorted_df = pd.DataFrame({'Categories':['background','ID','PW']})
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-num_epochs = 1000
+num_epochs = 10000
 batch_size = 4
-val_every = 10
+val_every = 50
+preload = True
 
-saved_dir = './saved/unet_focal_2'
+saved_dir = './saved/unet_focal_g_00_78'
 if not os.path.isdir(saved_dir):                                                           
     os.mkdir(saved_dir)
 
@@ -41,10 +42,16 @@ optimizer = torch.optim.Adam(params = unetpp.parameters(), lr = 0.0001, weight_d
 
 transform = A.Compose([
     A.Resize(512,512),
+    A.GaussNoise(var_limit=(50,100)),
+    A.MotionBlur(blur_limit=5),
+    A.Blur(5),
+    A.OneOf([
+        A.ShiftScaleRotate(rotate_limit=(-45,45),p=1),
+        A.ElasticTransform(sigma=30,alpha_affine=30,p=1)],p=0.7),
     ToTensorV2()
-])
-train_dataset = dataset.WifiDataset_segmentation(ann_path,ocr_url,image_root,transform=transform)
-val_dataset = dataset.WifiDataset_segmentation(ann_path_val,ocr_url,image_root,transform=transform)
+    ])
+train_dataset = dataset.WifiDataset_segmentation(ann_path,ocr_url,image_root,transform=transform,preload=preload)
+val_dataset = dataset.WifiDataset_segmentation(ann_path_val,ocr_url,image_root,transform=transform,preload=preload)
 
 # collate_fn needs for batch
 def collate_fn(batch):
@@ -106,7 +113,7 @@ def train(num_epochs, model, data_loader, val_loader, criterion, optimizer, save
                 print(f"Best performance at epoch: {epoch + 1}")
                 print(f"Save model in {saved_dir}")
                 best_loss = avrg_loss
-                torch.save(model.state_dict(),f'{saved_dir}/best.pt')
+            torch.save(model.state_dict(),f'{saved_dir}/{epoch+1}.pt')
 
     torch.save(model.state_dict(),f'{saved_dir}/last.pt')
 
