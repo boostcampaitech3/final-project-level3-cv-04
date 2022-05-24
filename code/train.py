@@ -1,6 +1,6 @@
 import os
 import torch
-from utils import label_accuracy_score, add_hist
+from utils import label_accuracy_score, add_hist, convert_box_mask
 import numpy as np
 import pandas as pd
 import numpy as np
@@ -12,44 +12,47 @@ import model
 import loss
 
 
-ann_path = '/opt/ml/upstage_OCR/Data set/annotations/general_00_78.json'
-ann_path_val = '/opt/ml/upstage_OCR/Data set/annotations/general_181_213.json'
+ann_path = '/opt/ml/upstage_OCR/Data set/train_general.json'
+ann_path_val = '/opt/ml/upstage_OCR/Data set/valid_general.json'
 ocr_url = "http://118.222.179.32:30000/ocr/"
 image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 sorted_df = pd.DataFrame({'Categories':['background','ID','PW']})
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-num_epochs = 10000
+num_epochs = 2000
 batch_size = 4
-val_every = 50
+val_every = 10
 preload = True
 
-saved_dir = './saved/unet_focal_g_00_78'
+saved_dir = './saved/unet++'
 if not os.path.isdir(saved_dir):                                                           
     os.mkdir(saved_dir)
 
 
 # model 정의
-unetpp = model.UNetPlusPlus(out_ch=3,height=512,width=512)
+# model_ = model.UNet_3Plus(n_classes=3)
+model_ = model.UNetPlusPlus(out_ch=3)
 
 # Loss function 정의
 # criterion = torch.nn.CrossEntropyLoss()
 criterion = loss.FocalLoss()
 
 # Optimizer 정의
-optimizer = torch.optim.Adam(params = unetpp.parameters(), lr = 0.0001, weight_decay=1e-6)
+optimizer = torch.optim.Adam(params = model_.parameters(), lr = 0.0001, weight_decay=1e-6)
 
 
 transform = A.Compose([
     A.Resize(512,512),
-    A.GaussNoise(var_limit=(50,100)),
-    A.MotionBlur(blur_limit=5),
+    # A.GaussNoise(var_limit=(50,100)),
+    # A.MotionBlur(blur_limit=5),
     A.Blur(5),
     A.OneOf([
         A.ShiftScaleRotate(rotate_limit=(-45,45),p=1),
-        A.ElasticTransform(sigma=30,alpha_affine=30,p=1)],p=0.7),
+        # A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
+        ],p=0.5),
     ToTensorV2()
     ])
+
 train_dataset = dataset.WifiDataset_segmentation(ann_path,ocr_url,image_root,transform=transform,preload=preload)
 val_dataset = dataset.WifiDataset_segmentation(ann_path_val,ocr_url,image_root,transform=transform,preload=preload)
 
@@ -76,7 +79,7 @@ def train(num_epochs, model, data_loader, val_loader, criterion, optimizer, save
         model.train()
         torch.save(model,f'{saved_dir}/model.pt')
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks, _) in enumerate(data_loader):
+        for step, (images, masks, _, mask_list) in enumerate(data_loader):
             images = torch.stack(images)       
             masks = torch.stack(masks).long() 
             
@@ -88,6 +91,7 @@ def train(num_epochs, model, data_loader, val_loader, criterion, optimizer, save
             
             # inference
             outputs = model(images)
+            outputs = convert_box_mask(outputs,mask_list,device)        # segmentation --> box
             
             # loss 계산 (cross entropy loss)
             loss = criterion(outputs, masks)
@@ -128,8 +132,7 @@ def validation(epoch, model, data_loader, criterion, device):
         cnt = 0
         
         hist = np.zeros((n_class, n_class))
-        for step, (images, masks, _) in enumerate(data_loader):
-            
+        for step, (images, masks, _, mask_list) in enumerate(data_loader):
             images = torch.stack(images)       
             masks = torch.stack(masks).long()  
 
@@ -139,6 +142,7 @@ def validation(epoch, model, data_loader, criterion, device):
             model = model.to(device)
             
             outputs = model(images)
+            outputs = convert_box_mask(outputs,mask_list,device)        # segmentation --> box
             loss = criterion(outputs, masks)
             total_loss += loss
             cnt += 1
@@ -159,4 +163,4 @@ def validation(epoch, model, data_loader, criterion, device):
     return avrg_loss
 
 
-train(num_epochs, unetpp, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device)
+train(num_epochs, model_, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device)
