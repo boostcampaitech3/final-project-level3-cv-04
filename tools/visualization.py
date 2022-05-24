@@ -44,14 +44,14 @@ def read_img(image_name: str, target_h: int = 1000) -> Image:
     h, w = img.height, img.width
     ratio = target_h/h
     target_w = int(ratio * w)
-    img = img.resize((target_w, target_h))
+    # img = img.resize((target_w, target_h))
 
     # draw polygon
     for val in ann_dict['ocr']['word']:
         poly = val['points']
         tag_ori = val['orientation']
         tag_text = val["text"]
-        poly_resize = [[v * ratio for v in pt] for pt in poly]
+        poly_resize = [[v for v in pt] for pt in poly]
         draw_polygon(img, poly_resize, tag_text, tag_ori)
 
     return img
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-ho','--host',default='0.0.0.0')
     parser.add_argument('-p','--port',default='4000')
-    parser.add_argument('-i','--image_path',default='/opt/ml/upstage_OCR/datas/Data set/real data/general')
+    parser.add_argument('-i','--image_path',default='/opt/ml/upstage_OCR/Data set/real data/receipt')
     parser.add_argument('-f','--font_path',default='/opt/ml/upstage_OCR/tools/fonts/NanumSquareRoundB.ttf')
     parser.add_argument('-r','--row',default=2)
     parser.add_argument('-c','--column',default=2)
