@@ -24,14 +24,14 @@ batch_size = 4
 val_every = 10
 preload = True
 
-saved_dir = './saved/unet++'
+saved_dir = './saved/unet+++'
 if not os.path.isdir(saved_dir):                                                           
     os.mkdir(saved_dir)
 
 
 # model 정의
 # model_ = model.UNet_3Plus(n_classes=3)
-model_ = model.UNetPlusPlus(out_ch=3)
+model_ = model.UNet_3Plus(n_classes=3)
 
 # Loss function 정의
 # criterion = torch.nn.CrossEntropyLoss()
@@ -91,7 +91,7 @@ def train(num_epochs, model, data_loader, val_loader, criterion, optimizer, save
             
             # inference
             outputs = model(images)
-            outputs = convert_box_mask(outputs,mask_list,device)        # segmentation --> box
+            # outputs = convert_box_mask(outputs,mask_list,device)        # segmentation --> box
             
             # loss 계산 (cross entropy loss)
             loss = criterion(outputs, masks)
@@ -142,7 +142,7 @@ def validation(epoch, model, data_loader, criterion, device):
             model = model.to(device)
             
             outputs = model(images)
-            outputs = convert_box_mask(outputs,mask_list,device)        # segmentation --> box
+            # outputs = convert_box_mask(outputs,mask_list,device)        # segmentation --> box
             loss = criterion(outputs, masks)
             total_loss += loss
             cnt += 1
