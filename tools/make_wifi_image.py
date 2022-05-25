@@ -33,15 +33,15 @@ def get_ann(img_path,api_url="http://118.222.179.32:30000/ocr/") -> dict:
     return response.json()
 
 def get_keys(ann):
-    id_list = ['ID', 'ID:', '아이디', '아이디:', 'NETWORK']
-    pw_list = ['PW', 'PW:', '비밀번호', '비밀번호:', 'PASSCODE:', 'password', 'password:', 'PASSWORD', 'PASSWORD:']
+    id_list = ['ID','ID:','아이디','아이디:', 'NETWORK', 'NETWORK:','D']
+    pw_list = ['PW','PW:', '비밀번호', '비밀번호:', 'PASSCODE', 'PASSCODE:', 'PASSWORD', 'PASSWORD:']
     words = ann['ocr']['word']
     position_id = [0,0,0,0]
     position_pw = [0,0,0,0]
     for word in words:
-        if word['text'] in id_list:
+        if word['text'].upper() in id_list:
             position_id = word['points']
-        if word['text'] in pw_list:
+        if word['text'].upper() in pw_list:
             position_pw = word['points']
 
     return position_id, position_pw
@@ -100,6 +100,8 @@ def wifi_image_generation():
         filename = os.path.join(img_path,img_name)
         template_ann = get_ann(filename)
         pos_id_key, pos_pw_key = get_keys(template_ann)
+        if pos_id_key == [0,0,0,0] or pos_pw_key == [0,0,0,0]:
+            print('Warning: ',filename, 'has no ID or PW key')
         pos_x_gen_id = pos_id_key[1][0]
         pos_x_gen_pw = pos_pw_key[1][0]
         pos_y_gen_id = min(pos_id_key[0][1], pos_id_key[1][1])
@@ -112,7 +114,7 @@ def wifi_image_generation():
 
             # 생성할 문자열의 좌상단 좌표, key와의 margin을 random값으로 지정(10~20 pixels)
             pos_id_value = [pos_x_gen_id + random.randint(10, 20), pos_y_gen_id] 
-            pos_pw_value = [pos_x_gen_id + random.randint(10, 20), pos_y_gen_pw] 
+            pos_pw_value = [pos_x_gen_pw + random.randint(10, 20), pos_y_gen_pw] 
     
             # Font Selection
             font_list = os.listdir(font_path)
@@ -258,7 +260,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-img','--img_path',default='./templates')
     parser.add_argument('-font','--font_path',default='./fonts')
-    parser.add_argument('-num','--num_img',default=3)
+    parser.add_argument('-num','--num_img',default=3,type=int)
     parser.add_argument('-id','--text_id',default=None)
     parser.add_argument('-pw','--text_pw',default=None)
     arg = parser.parse_args()

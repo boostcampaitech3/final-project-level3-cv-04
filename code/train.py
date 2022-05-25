@@ -2,7 +2,7 @@ import os
 import argparse
 import yaml
 import torch
-from utils import label_accuracy_score, add_hist
+from utils import label_accuracy_score, add_hist, convert_box_mask
 import numpy as np
 import pandas as pd
 import numpy as np
@@ -51,33 +51,6 @@ class main():
                                                 shuffle=True,
                                                 collate_fn=collate_fn)
 
-    """ 
-        ann_path = '/opt/ml/final-project-level3-cv-04/Data set/annotations/general_00_10+46_78.json'
-        ann_path_val = '/opt/ml/final-project-level3-cv-04/Data set/annotations/general_00_10.json'
-        
-        image_root = '/opt/ml/final-project-level3-cv-04/Data set/real data/general'
-        sorted_df = pd.DataFrame({'Categories':['background','ID','PW']})
-
-        num_epochs = 1000
-        batch_size = 4
-        val_every = 10
-
-        saved_dir = './saved/unet_3p'
-        if not os.path.isdir(saved_dir):                                                           
-            os.mkdir(saved_dir)
-
-
-        # model 정의
-        unetpp = model.UNetPlusPlus(out_ch=3,height=512,width=512)
-        unet3p = model.UNet_3Plus(n_classes=3)
-        # Loss function 정의
-        # criterion = torch.nn.CrossEntropyLoss()
-        criterion = loss.FocalLoss()
-
-        # Optimizer 정의
-        # optimizer = torch.optim.Adam(params = unetpp.parameters(), lr = 0.0001, weight_decay=1e-6)
-        optimizer = torch.optim.Adam(params = unet3p.parameters(), lr = 0.0001, weight_decay=1e-6)
-    """
 
     def train(self):
         print(f'Start training..')
@@ -160,10 +133,12 @@ class main():
                 
                 hist = add_hist(hist, masks, outputs, n_class=n_class)
             
+
             acc, acc_cls, mIoU, fwavacc, IoU = label_accuracy_score(hist)
 
             sorted_df = pd.DataFrame({'Categories':['background','ID','PW']})
             IoU_by_class = [{classes : round(IoU,4)} for IoU, classes in zip(IoU , sorted_df['Categories'])]
+
             
             avrg_loss = total_loss / cnt
             print(f'Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
@@ -183,4 +158,3 @@ if __name__ == '__main__':
     
     Main=main(main_config)
     Main.train()
-# train(num_epochs, unet3p, train_dataloader, val_dataloader, criterion, optimizer, saved_dir, val_every, device)
