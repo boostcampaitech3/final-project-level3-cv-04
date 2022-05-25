@@ -34,10 +34,17 @@ class main():
 
         transform = A.Compose([
             A.Resize(512,512),
+            # A.GaussNoise(var_limit=(50,100)),
+            # A.MotionBlur(blur_limit=5),
+            A.Blur(5),
+            A.OneOf([
+                A.ShiftScaleRotate(rotate_limit=(-45,45),p=1),
+                # A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
+                ],p=0.5),
             ToTensorV2()
         ])
-        train_dataset = dataset.WifiDataset_segmentation(self.train_json_path,ocr_url,self.image_path,transform=transform)
-        val_dataset = dataset.WifiDataset_segmentation(self.validation_json_path,ocr_url,self.image_path,transform=transform)
+        train_dataset = dataset.WifiDataset_segmentation(self.train_json_path,ocr_url,self.image_path,transform=transform,preload=False)
+        val_dataset = dataset.WifiDataset_segmentation(self.validation_json_path,ocr_url,self.image_path,transform=transform,preload=False)
         
         # collate_fn needs for batch
         def collate_fn(batch):
@@ -61,7 +68,7 @@ class main():
             self.model.train()
             torch.save(self.model,f'{self.save_path}/model.pt')
             hist = np.zeros((n_class, n_class))
-            for step, (images, masks, _) in enumerate(self.train_dataloader):
+            for step, (images, masks, _,_) in enumerate(self.train_dataloader):
                 images = torch.stack(images)       
                 masks = torch.stack(masks).long() 
                 
@@ -113,7 +120,7 @@ class main():
             cnt = 0
             
             hist = np.zeros((n_class, n_class))
-            for step, (images, masks, _) in enumerate(data_loader):
+            for step, (images, masks, _,_) in enumerate(data_loader):
                 
                 images = torch.stack(images)       
                 masks = torch.stack(masks).long()  
