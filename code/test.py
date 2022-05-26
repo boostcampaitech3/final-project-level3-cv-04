@@ -1,11 +1,15 @@
+import os
+import json
+
 import torch
-import dataset
+import torchvision
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
-import torchvision
-import os
 from PIL import Image
+
+from utils import convert_box_mask
+import dataset
 
 model_path = '/opt/ml/upstage_OCR/code/saved/unet+++/model.pt'
 state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet+++/170_56.pt'
@@ -34,43 +38,13 @@ test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset,
                                            shuffle=True,
                                            collate_fn=collate_fn)
 
-def convert_box_mask(images,mask_lists):
-    new_images = []
-    for image,mask_list in zip(images,mask_lists):
-        c1,c2,c3 = image
-        n_c1 = torch.ones(1,c1.shape[0],c1.shape[1]).to(device)
-        n_c2 = torch.zeros(1,c1.shape[0],c1.shape[1]).to(device)
-        n_c3 = torch.zeros(1,c1.shape[0],c1.shape[1]).to(device)
-        for mask in mask_list:
-            mask = mask[0]
-            dic = {}
-            dic[0] = sum(c1[mask == 1].data)
-            dic[1] = sum(c2[mask == 1].data)
-            dic[2] = sum(c3[mask == 1].data)
-            ratio_dic = {}
-            if sum([dic[0],dic[1],dic[2]]) == 0:
-                continue
-            ratio_dic[0] = dic[0]/sum([dic[0],dic[1],dic[2]])
-            ratio_dic[1] = dic[1]/sum([dic[0],dic[1],dic[2]])
-            ratio_dic[2] = dic[2]/sum([dic[0],dic[1],dic[2]])
-            n_c1[0][mask == 1] = ratio_dic[0]
-            n_c2[0][mask == 1] = ratio_dic[1]
-            n_c3[0][mask == 1] = ratio_dic[2]
-        new_image = torch.cat((n_c1,n_c2,n_c3),dim=0)
-        new_images.append(new_image)
-    new_images = torch.cat(list(map(lambda x:x.unsqueeze(0),new_images)))
-    return new_images
-
-iter_ = iter(test_dataloader)
 
 for images_idx,(x,y,meta,mask_list) in enumerate(test_dataloader):
-    x,y,meta,mask_list = next(iter_)
     model.eval()
     model.to(device)
     images = model(torch.stack(x).to(device))
 
-    new_images = convert_box_mask(images,mask_list)
-
+    new_images,out_list = convert_box_mask(images,mask_list,device)
 
     for idx in range(batch_size):
         out = torch.argmax(images[idx],dim=0)
@@ -103,4 +77,7 @@ for images_idx,(x,y,meta,mask_list) in enumerate(test_dataloader):
         plt.subplot(batch_size,5,idx*5+5)
         plt.imshow(raw_image)
 
-    plt.savefig(f'./out/{images_idx}.jpg')
+    plt.savefig(f'./out_1/{images_idx}.jpg')
+
+    with open(f'out_1/{images_idx}.json', 'w') as f:
+        json.dump(out_list[0],f,indent=4, ensure_ascii=False)

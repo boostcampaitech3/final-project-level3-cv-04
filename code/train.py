@@ -2,7 +2,7 @@ import os
 import argparse
 import yaml
 import torch
-from utils import label_accuracy_score, add_hist, convert_box_mask
+from utils import label_accuracy_score, add_hist
 import numpy as np
 import pandas as pd
 import numpy as np
@@ -35,7 +35,7 @@ class main():
 
         os.makedirs(main_config['save_path'], exist_ok=True)
 
-        transform = A.Compose([
+        transform1 = A.Compose([
             A.Resize(512,512),
             # A.GaussNoise(var_limit=(50,100)),
             # A.MotionBlur(blur_limit=5),
@@ -46,24 +46,25 @@ class main():
                 ],p=0.5),
             ToTensorV2()
         ])
-        # train_ann_path_list = [
-        #     '/opt/ml/upstage_OCR/Data set/train_general.json',
-        #     '/opt/ml/upstage_OCR/Data set/gen_ann.json'
-        # ]
-        # train_image_path_list = [
-        #     '/opt/ml/upstage_OCR/Data set/real data/general',
-        #     '/opt/ml/upstage_OCR/Data set/real data/gen_imgs'
-        # ]
-        # val_ann_path_list = [
-        #     '/opt/ml/upstage_OCR/Data set/valid_general.json'
-        # ]
-        # val_image_path_list = [
-        #     '/opt/ml/upstage_OCR/Data set/real data/general'
-        # ]
+        transform2 = A.Compose([
+            A.Resize(512,512),
+            A.GaussNoise(var_limit=(50,100)),
+            A.MotionBlur(blur_limit=5),
+            A.Blur(5),
+            A.OneOf([
+                A.ShiftScaleRotate(rotate_limit=(-45,45),p=1),
+                A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
+                ],p=0.5),
+            ToTensorV2()
+        ])
+        transform_list = [transform1,transform2]
+
         train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
-            for ann_path,image_path in zip(main_config['train_json_path_list'],main_config['train_image_path_list'])]
+            for ann_path,image_path,transform in \
+                zip(main_config['train_json_path_list'],main_config['train_image_path_list'],transform_list)]
         val_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
-            for ann_path,image_path in zip(main_config['val_json_path_list'],main_config['val_image_path_list'])]
+            for ann_path,image_path,transform in \
+                zip(main_config['val_json_path_list'],main_config['val_image_path_list'],transform_list)]
 
         train_dataset = dataset.Concat_Dataset(train_dataset_list)
         val_dataset = dataset.Concat_Dataset(val_dataset_list)
@@ -127,7 +128,7 @@ class main():
                     print(f"Best performance at epoch: {epoch + 1}")
                     print(f"Save model in {self.save_path}")
                     best_loss = avrg_loss
-                    torch.save(self.model.state_dict(),f'{self.save_path}/best.pt')
+                torch.save(self.model.state_dict(),f'{self.save_path}/{epoch+1}.pt')
 
         torch.save(self.model.state_dict(),f'{self.save_path}/last.pt')
 
