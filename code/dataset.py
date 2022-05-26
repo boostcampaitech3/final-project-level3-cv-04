@@ -198,3 +198,23 @@ class WifiDataset_segmentation(Dataset):
             t_mask_list = mask_list
             t = torchvision.transforms.ToTensor()
             return t(x),t(y),meta,t_mask_list
+
+
+class Concat_Dataset(Dataset):
+    def __init__(self,dataset_list):
+        super().__init__()
+        self.dataset_list = dataset_list
+        self.len_list = []
+        for dataset in self.dataset_list:
+            self.len_list.append(len(dataset))
+
+
+    def __getitem__(self, index): 
+        for i,l in enumerate(self.len_list):
+            if index < l:
+                return self.dataset_list[i][index]
+            else:
+                index -= l
+
+    def __len__(self):
+        return sum(self.len_list)

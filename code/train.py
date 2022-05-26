@@ -43,8 +43,27 @@ class main():
                 ],p=0.5),
             ToTensorV2()
         ])
-        train_dataset = dataset.WifiDataset_segmentation(self.train_json_path,ocr_url,self.image_path,transform=transform,preload=False)
-        val_dataset = dataset.WifiDataset_segmentation(self.validation_json_path,ocr_url,self.image_path,transform=transform,preload=False)
+        train_ann_path_list = [
+            '/opt/ml/upstage_OCR/Data set/train_general.json',
+            '/opt/ml/upstage_OCR/Data set/gen_ann.json'
+        ]
+        train_image_path_list = [
+            '/opt/ml/upstage_OCR/Data set/real data/general',
+            '/opt/ml/upstage_OCR/Data set/real data/gen_imgs'
+        ]
+        val_ann_path_list = [
+            '/opt/ml/upstage_OCR/Data set/valid_general.json'
+        ]
+        val_image_path_list = [
+            '/opt/ml/upstage_OCR/Data set/real data/general'
+        ]
+        train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform,preload=False) \
+            for ann_path,image_path in zip(train_ann_path_list,train_image_path_list)]
+        val_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform,preload=False) \
+            for ann_path,image_path in zip(val_ann_path_list,val_image_path_list)]
+
+        train_dataset = dataset.Concat_Dataset(train_dataset_list)
+        val_dataset = dataset.Concat_Dataset(val_dataset_list)
         
         # collate_fn needs for batch
         def collate_fn(batch):
