@@ -1,0 +1,26 @@
+# -- path setting
+train_json_path_list : [
+            '/opt/ml/upstage_OCR/Data set/train_general.json',
+            '/opt/ml/upstage_OCR/Data set/gen_ann.json'
+        ]
+val_json_path_list : [
+            '/opt/ml/upstage_OCR/Data set/valid_general.json'
+        ]
+train_image_path_list : [
+            '/opt/ml/upstage_OCR/Data set/real data/general',
+            '/opt/ml/upstage_OCR/Data set/real data/gen_imgs'
+        ]
+val_image_path_list : [
+            '/opt/ml/upstage_OCR/Data set/real data/general'
+        ]
+save_path : './saved/unet_3p'
+
+# -- hyperparameter
+epochs : 1000
+batch_size : 4
+lr : 0.0001
+
+# -- validation
+validate : True
+eval_interval : 50
+

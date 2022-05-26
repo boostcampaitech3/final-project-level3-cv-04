@@ -16,9 +16,10 @@ import loss
 class main():
 
     def __init__(self,main_config):
-        self.train_json_path = main_config['train_json_path']
-        self.validation_json_path = main_config['validation_json_path']
-        self.image_path = main_config['image_path']
+        self.train_json_path_list = main_config['train_json_path_list']
+        self.val_json_path_list = main_config['val_json_path_list']
+        self.train_image_path_list = main_config['train_image_path_list']
+        self.val_image_path_list = main_config['val_image_path_list']
         self.save_path = main_config['save_path']
         self.epochs = main_config['epochs']
         self.batch_size = main_config['batch_size']
@@ -32,6 +33,8 @@ class main():
         self.optimizer = torch.optim.Adam(params = self.model.parameters(), lr = self.lr, weight_decay=1e-6)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+        os.makedirs(main_config['save_path'], exist_ok=True)
+
         transform = A.Compose([
             A.Resize(512,512),
             # A.GaussNoise(var_limit=(50,100)),
@@ -43,24 +46,24 @@ class main():
                 ],p=0.5),
             ToTensorV2()
         ])
-        train_ann_path_list = [
-            '/opt/ml/upstage_OCR/Data set/train_general.json',
-            '/opt/ml/upstage_OCR/Data set/gen_ann.json'
-        ]
-        train_image_path_list = [
-            '/opt/ml/upstage_OCR/Data set/real data/general',
-            '/opt/ml/upstage_OCR/Data set/real data/gen_imgs'
-        ]
-        val_ann_path_list = [
-            '/opt/ml/upstage_OCR/Data set/valid_general.json'
-        ]
-        val_image_path_list = [
-            '/opt/ml/upstage_OCR/Data set/real data/general'
-        ]
-        train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform,preload=False) \
-            for ann_path,image_path in zip(train_ann_path_list,train_image_path_list)]
-        val_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform,preload=False) \
-            for ann_path,image_path in zip(val_ann_path_list,val_image_path_list)]
+        # train_ann_path_list = [
+        #     '/opt/ml/upstage_OCR/Data set/train_general.json',
+        #     '/opt/ml/upstage_OCR/Data set/gen_ann.json'
+        # ]
+        # train_image_path_list = [
+        #     '/opt/ml/upstage_OCR/Data set/real data/general',
+        #     '/opt/ml/upstage_OCR/Data set/real data/gen_imgs'
+        # ]
+        # val_ann_path_list = [
+        #     '/opt/ml/upstage_OCR/Data set/valid_general.json'
+        # ]
+        # val_image_path_list = [
+        #     '/opt/ml/upstage_OCR/Data set/real data/general'
+        # ]
+        train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
+            for ann_path,image_path in zip(main_config['train_json_path_list'],main_config['train_image_path_list'])]
+        val_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
+            for ann_path,image_path in zip(main_config['val_json_path_list'],main_config['val_image_path_list'])]
 
         train_dataset = dataset.Concat_Dataset(train_dataset_list)
         val_dataset = dataset.Concat_Dataset(val_dataset_list)
