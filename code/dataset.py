@@ -14,7 +14,7 @@ from collections import defaultdict
 
 id_list = ['ID', 'ID:', '아이디', 'NETWORK', '네트워크']
 pw_list = ['PW', 'PW:', '비밀번호','PASSCODE', 'PASSWORD', '패스워드']
-key_list = id_list + pw_list + [':','WIFI', '1층', '2층', '3층', '4층', 'FREE', 'WI-FI', 'KT', 'GIGA','와이파이']
+key_list = id_list + pw_list + ['WIFI', 'WI-FI', '와이파이']
 
 
 class Custom_COCO(COCO):
@@ -83,26 +83,17 @@ def get_ann(img_path:str,api_url:str) -> dict:
     return response.json()
 
 
-def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
+def img_to_focusmask(image_path:str,api_url:str) -> np.array:
     image = Image.open(image_path)
     image = ImageOps.exif_transpose(image).convert('RGB')
-    image = torchvision.transforms.ToTensor()(image)
-    image_gray = torchvision.transforms.Grayscale()(image)
+    image_gray = image.convert('L')
+    image = np.array(image)
+    image_gray = np.array(image_gray)
 
     ann_dict = get_ann(image_path,api_url)
     coco_dict = {
-        'images':[{
-            'filename':image_path,
-            'height': image.shape[1],
-            'width': image.shape[2],
-            'id': 0
-        }],
-        'categories':[
-            {
-                'id':1,
-                "name": "text"
-            }
-        ],
+        'images':[{'filename':image_path,'height': image.shape[0],'width': image.shape[1],'id': 0}],
+        'categories':[{'id':1,"name": "text"}],
         'annotations':[]
     }
 
@@ -119,59 +110,91 @@ def img_to_focusmask(image_path:str,api_url:str) -> torch.Tensor:
 
     coco = Custom_COCO(coco_dict)
 
-    c1 = np.zeros((1,image.shape[1], image.shape[2]))
-    c2 = np.zeros((1,image.shape[1], image.shape[2]))
+    c1 = torch.zeros((1,image.shape[0], image.shape[1]))
+    c2 = torch.zeros((1,image.shape[0], image.shape[1]))
 
+    mask_list = []
     for ann in coco.anns.values():
-        c1[0][coco.annToMask(ann) == 1] = ann['category_id']
+        c1[0][coco.annToMask(ann) == 1] = 255
+        mask_list.append(coco.annToMask(ann))
 
     for ann in coco.anns.values():
         if any(map(lambda x: x in ann['text'],key_list)):
-            c2[0][coco.annToMask(ann) == 1] = ann['category_id']
+            c2[0][coco.annToMask(ann) == 1] = 255
 
-    c1 = torch.from_numpy(c1)
-    c2 = torch.from_numpy(c2)
-    out = torch.cat((image_gray,c1,c2))
+    t = torchvision.transforms.ToPILImage()
+    c1 = np.array(t(c1))
+    c2 = np.array(t(c2))
+    c1 = np.reshape(c1,(c1.shape[0],c1.shape[1],1))
+    c2 = np.reshape(c2,(c1.shape[0],c1.shape[1],1))
+    image_gray = np.reshape(image_gray,(c1.shape[0],c1.shape[1],1))
+    out = np.concatenate((image_gray,c1,c2),axis=2)
 
-    return out
+    return out,mask_list,image
 
 
 class WifiDataset_segmentation(Dataset):
-    def __init__(self,ann_path,api_url,image_root,transform = None):
+    def __init__(self,ann_path,api_url,image_root,transform = None, preload = True):
         self.transfrom = transform
         self.img_root = image_root
         self.coco = COCO(ann_path)
         self.api_url = api_url
-        self.img_names = []
-        self.anns = []
+        self.preload = preload
+        self.img_metas = []             # 이미지별 메타 정보 list
+        self.anns = []                  # [[ann1-1, ann1-2], [ann2-1,ann2-2], ... ]
         for img_id in self.coco.getImgIds():
-            self.img_names.append(self.coco.loadImgs(img_id))
+            self.img_metas.append(self.coco.loadImgs(img_id))
             self.anns.append([])
             for ann_id in self.coco.getAnnIds(img_id):
                 self.anns[-1].append(self.coco.loadAnns(ann_id))
 
-        self.x_list = []
-        self.y_list = []
-        self.meta_list = []
-        print('load images ...')
-        for img_name,ann_list in tqdm(zip(self.img_names,self.anns),total=len(self.img_names)):
-            img_name = img_name[0]['file_name']
-            x = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
-            y = torch.zeros((x.shape[1],x.shape[2]))
-            for ann in ann_list:
-                y[self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
+        if preload == True:
+            self.x_list = []            # [img1,img2, ...]
+            self.y_list = []            # [mask1,mask2, ...]
+            self.mask_lists = []
+            
+            print('load images ...')
+            for img_name,ann_list in tqdm(zip(self.img_metas,self.anns),total=len(self.img_metas)):
+                img_name = img_name[0]['file_name']
+                x,mask_list,_ = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
+                self.mask_lists.append(mask_list)
+                y = np.zeros((x.shape[0],x.shape[1]))
+                for ann in ann_list:
+                    y[self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
 
-            if self.transfrom:
-                transformed = self.transfrom(
-                    image=np.array(x.reshape(x.shape[1],x.shape[2],3)),
-                    mask=np.array(y))
-                x = transformed['image']
-                y = transformed['mask']
-            self.x_list.append(x.type(torch.FloatTensor))
-            self.y_list.append(y.type(torch.LongTensor))
+                self.x_list.append(x)
+                self.y_list.append(y)
 
     def __len__(self):
-        return len(self.img_names)
+        return len(self.img_metas)
     
     def __getitem__(self, idx):
-        return self.x_list[idx], self.y_list[idx], self.img_names[idx]
+        meta = self.img_metas[idx]
+        ann_list = self.anns[idx]
+        y = np.zeros((meta[0]['height'],meta[0]['width']))
+        for ann in ann_list:
+            y[self.coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
+        
+        if self.preload:
+            x = self.x_list[idx]
+            mask_list = self.mask_lists[idx]
+        else:
+            img_name = meta[0]['file_name']
+            x,mask_list,_ = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
+
+        if self.transfrom:
+            transformed = self.transfrom(               # transform 에 ToTensor 포함됨
+                image=x,
+                mask=y)
+            x = transformed['image'].type(torch.FloatTensor)
+            y = transformed['mask'].type(torch.LongTensor)
+            t_mask_list = []
+            for mask in mask_list:
+                transformed = self.transfrom(image=np.array(mask))
+                t_mask_list.append(transformed['image'])
+            return x,y,meta,t_mask_list
+
+        else:
+            t_mask_list = mask_list
+            t = torchvision.transforms.ToTensor()
+            return t(x),t(y),meta,t_mask_list

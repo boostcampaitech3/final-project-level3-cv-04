@@ -2,12 +2,14 @@
 
 from matplotlib.transforms import Bbox
 import numpy as np
+
 import requests
 import math
 import albumentations as A
 import cv2
 from pycocotools.coco import COCO
 import os
+import torch
 
 def _fast_hist(label_true, label_pred, n_class):
     mask = (label_true >= 0) & (label_true < n_class)
@@ -143,3 +145,31 @@ def img_rotate(ann_path, img_root, img_id): # root는 폴더
 #     freq = hist.sum(axis=1) / hist.sum()
 #     fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
 #     return acc, acc_cls, mean_iu, fwavacc, iu
+
+
+def convert_box_mask(images,mask_lists,device):
+    new_images = []
+    for image,mask_list in zip(images,mask_lists):
+        c1,c2,c3 = image
+        n_c1 = torch.ones(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
+        n_c2 = torch.zeros(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
+        n_c3 = torch.zeros(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
+        for mask in mask_list:
+            mask = mask[0]
+            dic = {}
+            dic[0] = sum(c1[mask == 1].data)
+            dic[1] = sum(c2[mask == 1].data)
+            dic[2] = sum(c3[mask == 1].data)
+            ratio_dic = {}
+            if sum([dic[0],dic[1],dic[2]]) == 0:
+                continue
+            ratio_dic[0] = dic[0]/sum([dic[0],dic[1],dic[2]])
+            ratio_dic[1] = dic[1]/sum([dic[0],dic[1],dic[2]])
+            ratio_dic[2] = dic[2]/sum([dic[0],dic[1],dic[2]])
+            n_c1[0][mask == 1] = ratio_dic[0]
+            n_c2[0][mask == 1] = ratio_dic[1]
+            n_c3[0][mask == 1] = ratio_dic[2]
+        new_image = torch.cat((n_c1,n_c2,n_c3),dim=0)
+        new_images.append(new_image)
+    new_images = torch.cat(list(map(lambda x:x.unsqueeze(0),new_images)))
+    return new_images
