@@ -28,7 +28,7 @@ class main():
         self.lr = main_config['lr']
         ocr_url = "http://118.222.179.32:30000/ocr/"
         
-        self.model = model.UNetPlusPlus(out_ch=3,height=512,width=512)
+        self.model = model.UNetPlusPlus(in_ch=7,out_ch=3,height=512,width=512)
         self.criterion = loss.FocalLoss()
         self.optimizer = torch.optim.Adam(params = self.model.parameters(), lr = self.lr, weight_decay=1e-6)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -45,24 +45,24 @@ class main():
                 # A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
                 ],p=0.5),
             ToTensorV2()
-        ])
+        ], additional_targets={'mask4': 'mask', 'mask5': 'mask', 'mask6': 'mask', 'mask7': 'mask'})
         transform2 = A.Compose([
             A.Resize(512,512),
-            A.GaussNoise(var_limit=(50,100)),
-            A.MotionBlur(blur_limit=5),
+            # A.GaussNoise(var_limit=(50,100)),
+            # A.MotionBlur(blur_limit=5),
             A.Blur(5),
             A.OneOf([
                 A.ShiftScaleRotate(rotate_limit=(-45,45),p=1),
-                A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
+                # A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
                 ],p=0.5),
             ToTensorV2()
-        ])
+        ], additional_targets={'mask4': 'mask', 'mask5': 'mask', 'mask6': 'mask', 'mask7': 'mask'})
         transform_list = [transform1,transform2]
 
-        train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
+        train_dataset_list = [dataset.five_channel_wifi_dataset(ann_path,ocr_url,image_path,transform=transform) \
             for ann_path,image_path,transform in \
                 zip(main_config['train_json_path_list'],main_config['train_image_path_list'],transform_list)]
-        val_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
+        val_dataset_list = [dataset.five_channel_wifi_dataset(ann_path,ocr_url,image_path,transform=transform) \
             for ann_path,image_path,transform in \
                 zip(main_config['val_json_path_list'],main_config['val_image_path_list'],transform_list)]
 
