@@ -2,6 +2,7 @@
 import requests
 import time
 import json
+import io
 
 import numpy as np
 import torch
@@ -14,7 +15,8 @@ from collections import defaultdict
 
 id_list = ['ID', 'ID:', '아이디', 'NETWORK', '네트워크']
 pw_list = ['PW', 'PW:', '비밀번호','PASSCODE', 'PASSWORD', '패스워드']
-key_list = id_list + pw_list + ['WIFI', 'WI-FI', '와이파이']
+wifi_list = ['WIFI', 'WI-FI', '와이파이']
+key_list = id_list + pw_list + wifi_list
 
 
 class Custom_COCO(COCO):
@@ -145,28 +147,28 @@ def convert_box_mask(images:torch.tensor,mask_lists,device) -> torch.tensor:
     return new_images,out_list
 
 
-def get_ann(img_path:str,api_url:str) -> dict:
+def get_ocr(img_path,api_url:str) -> dict:
+    ''' img_path : str or PIL image '''
+    if type(img_path) == str:
+        file_dict = {"file": open(img_path  , "rb")}
+    else:
+        output = io.BytesIO()
+        image = img_path
+        image.save(output, format="JPEG")
+        file_dict = {"file": output.getvalue()}
     headers = {"secret": "Boostcamp0000"}
-    file_dict = {"file": open(img_path  , "rb")}
     response = requests.post(api_url, headers=headers, files=file_dict)
     return response.json()
 
 
-def img_to_focusmask(image_path:str,api_url:str) -> np.array:
-    image = Image.open(image_path)
-    image = ImageOps.exif_transpose(image).convert('RGB')
-    image_gray = image.convert('L')
-    image = np.array(image)
-    image_gray = np.array(image_gray)
-
-    ann_dict = get_ann(image_path,api_url)
+def ocr_to_coco(ocr_result,image_path,image_shape:tuple) -> COCO:
     coco_dict = {
-        'images':[{'filename':image_path,'height': image.shape[0],'width': image.shape[1],'id': 0}],
+        'images':[{'filename':image_path,'height': image_shape[0],'width': image_shape[1],'id': 0}],
         'categories':[{'id':1,"name": "text"}],
         'annotations':[]
     }
 
-    for i,box in enumerate(ann_dict['ocr']['word']):
+    for i,box in enumerate(ocr_result['ocr']['word']):
         coco_dict['annotations'].append({
             'id':i,
             'image_id':0,
@@ -177,19 +179,38 @@ def img_to_focusmask(image_path:str,api_url:str) -> np.array:
         for point in box['points']:
             coco_dict['annotations'][-1]['segmentation'][0] += point
 
-    coco = Custom_COCO(coco_dict)
+    return Custom_COCO(coco_dict)
 
-    c1 = torch.zeros((1,image.shape[0], image.shape[1]))
-    c2 = torch.zeros((1,image.shape[0], image.shape[1]))
 
-    mask_list = []
+def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> torch.tensor:
+    c1 = torch.zeros((1,image_size[0], image_size[1]))
     for ann in coco.anns.values():
-        c1[0][coco.annToMask(ann) == 1] = 255
-        mask_list.append((coco.annToMask(ann),ann['text']))
+        if key_list:
+            if any(map(lambda x: x in ann['text'],key_list)):
+                c1[0][coco.annToMask(ann) == 1] = 255
+        else:
+            c1[0][coco.annToMask(ann) == 1] = 255
+    if get_each_mask:
+        mask_list = []
+        for ann in coco.anns.values():
+            mask_list.append((coco.annToMask(ann),ann['text']))
+        return c1,mask_list
+    return c1
 
-    for ann in coco.anns.values():
-        if any(map(lambda x: x in ann['text'],key_list)):               ##########TODO###########
-            c2[0][coco.annToMask(ann) == 1] = 255
+
+def img_to_focusmask(image_path:str,api_url:str) -> np.array:
+    image = Image.open(image_path)
+    image = ImageOps.exif_transpose(image).convert('RGB')
+    image_gray = image.convert('L')
+    image = np.array(image)
+    image_gray = np.array(image_gray)
+
+    ann_dict = get_ocr(image_path,api_url)
+
+    coco = ocr_to_coco(ann_dict,image_path,(image.shape[0],image.shpae[1]))
+
+    c1,mask_list = coco_to_mask(coco,image,key_list=None,get_each_mask=True)
+    c2 = coco_to_mask(coco,image,key_list=key_list,get_each_mask=False)
 
     t = torchvision.transforms.ToPILImage()
     c1 = np.array(t(c1))
