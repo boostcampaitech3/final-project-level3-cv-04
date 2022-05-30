@@ -43,7 +43,7 @@ class WifiDataset_segmentation(Dataset):
             print('load images ...')
             for img_name,ann_list in tqdm(zip(self.img_metas,self.anns),total=len(self.img_metas)):
                 img_name = img_name[0]['file_name']
-                x,mask_list,_ = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
+                x,mask_list,_ = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url,key_list)
                 self.mask_lists.append(mask_list)
                 y = np.zeros((x.shape[0],x.shape[1]))
                 for ann in ann_list:
@@ -67,7 +67,7 @@ class WifiDataset_segmentation(Dataset):
             mask_list = self.mask_lists[idx]
         else:
             img_name = meta[0]['file_name']
-            x,mask_list,_ = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url)
+            x,mask_list,_ = img_to_focusmask(os.path.join(self.img_root,img_name),self.api_url,key_list)
 
         if self.transfrom:
             transformed = self.transfrom(               # transform 에 ToTensor 포함됨

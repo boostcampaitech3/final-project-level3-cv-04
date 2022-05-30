@@ -265,7 +265,7 @@ def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> tor
     return c1
 
 
-def img_to_focusmask(image_path:str,api_url:str) -> np.array:
+def img_to_focusmask(image_path:str,api_url:str,key_list) -> np.array:
     image = Image.open(image_path)
     image = ImageOps.exif_transpose(image).convert('RGB')
     image_gray = image.convert('L')
@@ -274,10 +274,10 @@ def img_to_focusmask(image_path:str,api_url:str) -> np.array:
 
     ann_dict = get_ocr(image_path,api_url)
 
-    coco = ocr_to_coco(ann_dict,image_path,(image.shape[0],image.shpae[1]))
+    coco = ocr_to_coco(ann_dict,image_path,image.shape)
 
-    c1,mask_list = coco_to_mask(coco,image,key_list=None,get_each_mask=True)
-    c2 = coco_to_mask(coco,image,key_list=key_list,get_each_mask=False)
+    c1,mask_list = coco_to_mask(coco,image.shape,key_list=None,get_each_mask=True)
+    c2 = coco_to_mask(coco,image.shape,key_list=key_list,get_each_mask=False)
 
     t = torchvision.transforms.ToPILImage()
     c1 = np.array(t(c1))

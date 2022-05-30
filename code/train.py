@@ -33,7 +33,7 @@ class main():
         self.optimizer = torch.optim.Adam(params = self.model.parameters(), lr = self.lr, weight_decay=1e-6)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-        os.makedirs(main_config['save_path'], exist_ok=True)
+        os.makedirs(main_config['save_path'])
 
         transform1 = A.Compose([
             A.Resize(512,512),
