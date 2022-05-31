@@ -45,7 +45,7 @@ class main():
                 # A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
                 ],p=0.5),
             ToTensorV2()
-        ])
+        ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
         transform2 = A.Compose([
             A.Resize(512,512),
             A.GaussNoise(var_limit=(50,100)),
@@ -56,7 +56,7 @@ class main():
                 A.ElasticTransform(sigma=30,alpha_affine=30,p=1),
                 ],p=0.5),
             ToTensorV2()
-        ])
+        ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
         transform_list = [transform1,transform2]
 
         train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \

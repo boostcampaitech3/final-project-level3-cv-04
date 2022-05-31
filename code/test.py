@@ -7,12 +7,13 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from PIL import Image
+from tqdm import tqdm
 
 from utils import convert_box_mask
 import dataset
 
-model_path = '/opt/ml/upstage_OCR/code/saved/unet+++/model.pt'
-state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet+++/170_56.pt'
+model_path = '/opt/ml/upstage_OCR/code/saved/unet+++_3c_rotate/model.pt'
+state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet+++_3c_rotate/280_57.pt'
 
 model = torch.load(model_path)
 model.load_state_dict(torch.load(state_dict_path))
@@ -21,14 +22,19 @@ ann_path = '/opt/ml/upstage_OCR/Data set/valid_general.json'
 ocr_url = "http://118.222.179.32:30000/ocr/"
 image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+out_folder = 'unet++_3c_rotate'
+
 transform = A.Compose([
     A.Resize(512,512),
     ToTensorV2()
-])
+], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
 
 batch_size = 1
 
-test_dataset = dataset.WifiDataset_segmentation(ann_path,ocr_url,image_root,transform=transform,preload=False)
+os.makedirs(f'out/{out_folder}')
+
+
+test_dataset = dataset.WifiDataset_segmentation(ann_path,ocr_url,image_root,transform=transform,mode='test')
 
 def collate_fn(batch):
     return tuple(zip(*batch))
@@ -39,7 +45,7 @@ test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset,
                                            collate_fn=collate_fn)
 
 
-for images_idx,(x,y,meta,mask_list) in enumerate(test_dataloader):
+for images_idx,(x,y,meta,mask_list) in tqdm(enumerate(test_dataloader),total=len(test_dataloader)):
     model.eval()
     model.to(device)
     images = model(torch.stack(x).to(device))
@@ -49,7 +55,7 @@ for images_idx,(x,y,meta,mask_list) in enumerate(test_dataloader):
     for idx in range(batch_size):
         out = torch.argmax(images[idx],dim=0)
         out2 = torch.argmax(new_images[idx],dim=0)
-        image_meta = meta[idx][0]
+        image_meta = meta[idx]
 
         raw_image = Image.open(os.path.join(image_root,image_meta['file_name']))
         t = A.Compose([
@@ -77,7 +83,7 @@ for images_idx,(x,y,meta,mask_list) in enumerate(test_dataloader):
         plt.subplot(batch_size,5,idx*5+5)
         plt.imshow(raw_image)
 
-    plt.savefig(f'./out_1/{images_idx}.jpg')
+    plt.savefig(f'./out/{out_folder}/{images_idx}.jpg')
 
-    with open(f'out_1/{images_idx}.json', 'w') as f:
+    with open(f'out/{out_folder}/{images_idx}.json', 'w') as f:
         json.dump(out_list[0],f,indent=4, ensure_ascii=False)
