@@ -12,9 +12,9 @@ from tqdm import tqdm
 from utils import convert_box_mask
 import dataset
 
-model_path = '/opt/ml/upstage_OCR/code/saved/unet+++_general+gen_7chanel/model.pt'
-state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet+++_general+gen_7chanel/1000.pt'
-out_folder = '7chanel'
+model_path = '/opt/ml/upstage_OCR/code/saved/unet++_7c_rotate_k0/model.pt'
+state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet++_7c_rotate_k0/230_65.0.pt'
+out_folder = '7chanel_rotate_k0'
 
 os.makedirs('out',exist_ok=True)
 os.makedirs(f'out/{out_folder}')
@@ -22,7 +22,7 @@ os.makedirs(f'out/{out_folder}')
 model = torch.load(model_path)
 model.load_state_dict(torch.load(state_dict_path))
 
-ann_path = '/opt/ml/upstage_OCR/Data set/valid_general.json'
+ann_path = '/opt/ml/upstage_OCR/Data set/test_0.json'
 ocr_url = "http://118.222.179.32:30000/ocr/"
 image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
