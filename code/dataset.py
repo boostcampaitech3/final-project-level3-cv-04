@@ -45,10 +45,10 @@ class WifiDataset_segmentation(Dataset):
         print('load images ...')
         for img_info,ann_list in tqdm(zip(self.img_infos,self.anns),total=len(self.img_infos)):
             img_name = img_info[0]['file_name']
-            # get PIL image & ocr out
+            # get PIL image
             image = Image.open(os.path.join(image_root,img_name))
             image = ImageOps.exif_transpose(image).convert('L')
-            ocr_out = get_ocr(image,api_url)
+            
             # ann --> GT_mask
             y = np.zeros((image.size[1],image.size[0]))
             for ann in ann_list:
@@ -56,6 +56,9 @@ class WifiDataset_segmentation(Dataset):
 
             # image preprocess (PIL --> numpy)
             image, y = utils.img_rotate(image,y)
+
+            # get ocr out
+            ocr_out = get_ocr(Image.fromarray(image),api_url)
 
             ###### ocr_list to mask ---> concat to image c4:all text, c5: wifi key, c6: id key, c7: pw key
             ocr_coco = ocr_to_coco(ocr_out,os.path.join(self.image_root,img_name),(image.shape[0],image.shape[1]))
@@ -94,6 +97,7 @@ class WifiDataset_segmentation(Dataset):
         y = transformed['mask'].type(torch.LongTensor)
         c2 = transformed['mask2']
         c3 = transformed['mask3']
+
         # concatenate image , masks
         x = torch.cat((x,c2.unsqueeze(0),c3.unsqueeze(0)),dim=0)
 
@@ -132,14 +136,20 @@ class five_channel_wifi_dataset(Dataset):
         print('load images ...')
         for img_info,ann_list in tqdm(zip(self.img_infos,self.anns),total=len(self.img_infos)):
             img_name = img_info[0]['file_name']
-            # get PIL image & ocr out
+            # get PIL image
             image = Image.open(os.path.join(image_root,img_name))
             image = ImageOps.exif_transpose(image).convert('RGB')
-            ocr_out = get_ocr(image,api_url)
+            
             # ann --> GT_mask
             y = np.zeros((image.size[1],image.size[0]))
             for ann in ann_list:
                 y[coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
+
+            # image preprocess (PIL --> numpy)
+            image, y = utils.img_rotate(image,y)
+
+            # get ocr out
+            ocr_out = get_ocr(Image.fromarray(image),api_url)
 
             ###### ocr_list to mask ---> concat to image 24:all text, c5:3wifi key, c6:image = np.array(image)
             ocr_coco = ocr_to_coco(ocr_out,os.path.join(self.image_root,img_name),(image.shape[0],image.shape[1]))
