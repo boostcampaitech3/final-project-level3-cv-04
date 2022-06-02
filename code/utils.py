@@ -117,7 +117,7 @@ def _fast_hist(label_true, label_pred, n_class):
     return hist
 
 
-def img_rotate(image,mask):
+def img_rotate(image,mask=None):
 
     def slope(x, y):
         sl = math.sqrt(x**2 + y**2)
@@ -162,12 +162,44 @@ def img_rotate(image,mask):
     ),
     ]
     alb_transform = A.Compose(func_list)
-    
-    image = np.array(image)
-    transformed = alb_transform(image=image,mask=mask)
 
-    return transformed['image'],transformed['mask']
+    if mask:
+        transformed = alb_transform(image=np.array(image),mask=mask)
+        return transformed['image'],transformed['mask']
+    else:
+        transformed = alb_transform(image=np.array(image))
+        return transformed['image']
 
+
+
+def seg_to_classification(image:torch.tensor,mask_list,device):
+    out = {'id':[],'pw':[]}
+    c1,c2,c3 = image
+    n_c1 = torch.ones(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
+    n_c2 = torch.zeros(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
+    n_c3 = torch.zeros(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
+    for mask,text in mask_list:
+        mask = mask[0]
+        dic = {}
+        dic[0] = sum(c1[mask == 1].data)
+        dic[1] = sum(c2[mask == 1].data)
+        dic[2] = sum(c3[mask == 1].data)
+        ratio_dic = {}
+        if sum([dic[0],dic[1],dic[2]]) == 0:
+            continue
+        ratio_dic[0] = dic[0]/sum([dic[0],dic[1],dic[2]])
+        ratio_dic[1] = dic[1]/sum([dic[0],dic[1],dic[2]])
+        ratio_dic[2] = dic[2]/sum([dic[0],dic[1],dic[2]])
+        n_c1[0][mask == 1] = ratio_dic[0]
+        n_c2[0][mask == 1] = ratio_dic[1]
+        n_c3[0][mask == 1] = ratio_dic[2]
+        if sorted(ratio_dic.items(), key = lambda item: item[1])[-1][0] == 1:
+            out['id'].append(text)
+        elif sorted(ratio_dic.items(), key = lambda item: item[1])[-1][0] == 2:
+            out['pw'].append(text)
+    new_image = torch.cat((n_c1,n_c2,n_c3),dim=0)
+
+    return new_image,out
 
 def seg_to_boxmask(images:torch.tensor,mask_lists,device) -> torch.tensor:
     '''
