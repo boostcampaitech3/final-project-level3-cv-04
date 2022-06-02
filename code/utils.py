@@ -169,7 +169,7 @@ def img_rotate(image,mask):
     return transformed['image'],transformed['mask']
 
 
-def convert_box_mask(images:torch.tensor,mask_lists,device) -> torch.tensor:
+def seg_to_boxmask(images:torch.tensor,mask_lists,device) -> torch.tensor:
     '''
     image segment --> bbox image, {id: ..., pw: ...}
     '''
@@ -245,7 +245,7 @@ def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> tor
     c1 = torch.zeros((1,image_size[0], image_size[1]))
     for ann in coco.anns.values():
         if key_list:
-            if any(map(lambda x: x in ann['text'],key_list)):
+            if ann['text'] in key_list:
                 c1[0][coco.annToMask(ann) == 1] = 255
         else:
             c1[0][coco.annToMask(ann) == 1] = 255

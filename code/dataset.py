@@ -9,7 +9,7 @@ import os
 from tqdm import tqdm
 
 import utils
-from utils import img_to_focusmask, get_ocr, ocr_to_coco, coco_to_mask
+from utils import get_ocr, ocr_to_coco, coco_to_mask
 
 id_list = ['ID', '아이디', 'NETWORK', '네트워크', 'IP', 'WIFI']
 id_list += list(map(lambda x:x + ':', id_list))
@@ -66,14 +66,14 @@ class WifiDataset_segmentation(Dataset):
             c3 = coco_to_mask(ocr_coco,image.shape,key_list=key_list,get_each_mask=False)
 
             if mode == 'test':
-                _,ocr_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
+                _,mask_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
 
             t = torchvision.transforms.ToPILImage()
             c2 = np.array(t(c2))
             c3 = np.array(t(c3))
             
             self.x_list.append(image)
-            self.ocr_lists.append(ocr_out)
+            self.ocr_lists.append((mask_out,ocr_out))
             self.y_list.append(y)
             self.c_list.append((c2,c3))
 
@@ -84,10 +84,10 @@ class WifiDataset_segmentation(Dataset):
         image = self.x_list[idx]
         y = self.y_list[idx]
         image_info = self.img_infos[idx][0]
-        ocr_list = self.ocr_lists[idx]
+        
         c2,c3 = self.c_list[idx]
         if self.mode == 'test':
-            ocr_list = self.ocr_lists[idx]
+            mask_list,ocr_list = self.ocr_lists[idx]
         else:
             ocr_list = None
 
@@ -103,9 +103,9 @@ class WifiDataset_segmentation(Dataset):
 
         if self.mode == 'test':
             t_ocr_list = []
-            for mask,texts in ocr_list:
+            for (mask,texts),location in zip(mask_list,ocr_list['ocr']['word']):
                 transformed = self.transfrom(image=np.array(mask))
-                t_ocr_list.append((transformed['image'],texts))
+                t_ocr_list.append((transformed['image'],(texts,location['points'])))
 
             return x,y,image_info,t_ocr_list
 
@@ -158,7 +158,7 @@ class five_channel_wifi_dataset(Dataset):
             c6 = coco_to_mask(ocr_coco,image.shape,key_list=id_list,get_each_mask=False)
             c7 = coco_to_mask(ocr_coco,image.shape,key_list=pw_list,get_each_mask=False)      # output: torch.tensor
             if mode == 'test':
-                _,ocr_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
+                _,mask_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
 
             t = torchvision.transforms.ToPILImage()
             c4 = np.array(t(c4))
@@ -167,7 +167,7 @@ class five_channel_wifi_dataset(Dataset):
             c7 = np.array(t(c7))
             
             self.x_list.append(image)
-            self.ocr_lists.append(ocr_out)
+            self.ocr_lists.append((mask_out,ocr_out))
             self.y_list.append(y)
             self.c_list.append((c4,c5,c6,c7))
 
@@ -178,10 +178,9 @@ class five_channel_wifi_dataset(Dataset):
         image = self.x_list[idx]
         y = self.y_list[idx]
         image_info = self.img_infos[idx][0]
-        ocr_list = self.ocr_lists[idx]
         c4,c5,c6,c7 = self.c_list[idx]
         if self.mode == 'test':
-            ocr_list = self.ocr_lists[idx]
+            mask_list,ocr_list = self.ocr_lists[idx]
         else:
             ocr_list = None
 
@@ -198,7 +197,7 @@ class five_channel_wifi_dataset(Dataset):
 
         if self.mode == 'test':
             t_ocr_list = []
-            for mask,texts in ocr_list:
+            for mask,texts in zip(mask_list,ocr_list):
                 transformed = self.transfrom(image=np.array(mask))
                 t_ocr_list.append((transformed['image'],texts))
 
