@@ -9,22 +9,21 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 
-from utils import convert_box_mask
+import utils
 import dataset
 
-model_path = '/opt/ml/upstage_OCR/code/saved/unet+++_general+gen_7chanel/model.pt'
-state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet+++_general+gen_7chanel/1000.pt'
-out_folder = '7chanel'
+model_path = '/opt/ml/upstage_OCR/code/saved/unet++_7c_rotate_k0/model.pt'
+state_dict_path = '/opt/ml/upstage_OCR/code/saved/unet++_7c_rotate_k0/490_68.3.pt'
+out_folder = 'u++_7chanel_rotate_k0'
+ann_path = '/opt/ml/upstage_OCR/Data set/test_0.json'
+image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 
-os.makedirs('out',exist_ok=True)
 os.makedirs(f'out/{out_folder}')
 
 model = torch.load(model_path)
 model.load_state_dict(torch.load(state_dict_path))
 
-ann_path = '/opt/ml/upstage_OCR/Data set/valid_general.json'
 ocr_url = "http://118.222.179.32:30000/ocr/"
-image_root = '/opt/ml/upstage_OCR/Data set/real data/general'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 transform = A.Compose([
     A.Resize(512,512),
@@ -50,7 +49,7 @@ for images_idx,(x,y,meta,mask_list) in tqdm(enumerate(test_dataloader),total=len
     model.to(device)
     images = model(torch.stack(x).to(device))
 
-    new_images,out_list = convert_box_mask(images,mask_list,device)
+    new_images,out_list = utils.seg_to_boxmask(images,mask_list,device)
 
     for idx in range(batch_size):
         out = torch.argmax(images[idx],dim=0)

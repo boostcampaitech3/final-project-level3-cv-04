@@ -1,3 +1,6 @@
+*.ipynb
+*.out
+
 code/__pycache__
 code/saved
 code/out
