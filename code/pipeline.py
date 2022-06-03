@@ -1,7 +1,7 @@
 from unicodedata import name
 import utils
 import dataset
-
+import os
 import torch
 import torchvision
 import numpy as np
@@ -23,7 +23,7 @@ def bbox_concat(bbox_list):
     phase = []
     for text in texts_:
         new_phase = []
-        if abs(text[1][1] - tmp) <= ((text[5][1] - text[1][1])/2) :  #  같은 라인 판별 / 글자의 반 이내면 
+        if abs(text[1][1] - tmp) <= ((text[5][1] - text[1][1])/3) :  #  같은 라인 판별 / 글자의 반 이내면 
             phase.append(text)
             tmp = text[1][1]
     else: # tmp값 벌어지면 다음 라인 취급
@@ -124,10 +124,17 @@ def pipeline(img_path,model,device):
 
 
 if __name__ == '__main__':
-    
-    img_path = '/opt/ml/upstage_OCR/Data set/real data/general/general005.jpg'
+
+
+    folder_path = '/opt/ml/upstage_OCR/Data set/real data/general'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/model.pt')
     model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/420_73.9.pt'))
 
-    pipeline(img_path,model,device)
+    imagelist = sorted(os.listdir(folder_path))
+    for path in imagelist:
+        imgpath = os.path.join(folder_path, path)
+    
+        pipeline(imgpath,model,device)
+        print("=========================================================================================")
+        
