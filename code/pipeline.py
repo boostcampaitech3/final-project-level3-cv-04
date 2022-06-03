@@ -11,6 +11,54 @@ from PIL import Image, ImageOps
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
+def bbox_concat(bbox_list):
+    texts = []
+    for ind, anno in enumerate(bbox_list):
+        texts.append((ind, anno[1][0],anno[1][1], anno[0], anno[1][2],anno[1][3],)) 
+
+    texts_ = sorted(texts, key = lambda x: (x[1][1],x[1][0]))  # y로 정렬 후 x정렬
+
+    tmp = texts_[0][1][1] # 첫번째 글자의 y좌표 
+    align = []
+    phase = []
+    for text in texts_:
+        new_phase = []
+        if abs(text[1][1] - tmp) <= ((text[5][1] - text[1][1])/2) :  #  같은 라인 판별 / 글자의 반 이내면 
+            phase.append(text)
+            tmp = text[1][1]
+    else: # tmp값 벌어지면 다음 라인 취급
+        phase.sort(key = lambda x: x[1][0]) # x로 정렬
+        align.append(phase)
+        new_phase.append(text)
+        phase = new_phase
+        tmp = text[2][1]
+
+    phase.sort(key = lambda x: x[1][0])
+    align.append(phase) # 마지막 줄 추가
+
+
+    print("--------------------")
+    line = []
+    word = []
+    for i in align:
+        tmp = i[0][1][0]
+        for n in i:
+            if n[1][0] - tmp <= 100: 
+                word.append(n[3])
+                tmp = n[2][0]
+            else:
+                word.append(" ")
+                word.append(n[3])
+                tmp = n[2][0]
+        line.append(word)
+        word = []
+
+    for i in line:
+        s = "".join(i)
+        print(s)
+
+    print(line)
+
 
 def get_3chanel_key_masked_image(image,ocr,img_path):
     ocr_coco = utils.ocr_to_coco(ocr,img_path,(image.shape[0],image.shape[1]))
@@ -68,12 +116,16 @@ def pipeline(img_path,model,device):
 
     print(out_list)
     ### TODO post processing: id, pw value list
+    if out_list['id']:
+        bbox_concat(out_list['id'])
+    if out_list['pw']:
+        bbox_concat(out_list['pw'])
     return
 
 
 if __name__ == '__main__':
     
-    img_path = '/opt/ml/upstage_OCR/Data set/real data/general/general003.jpg'
+    img_path = '/opt/ml/upstage_OCR/Data set/real data/general/general005.jpg'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/model.pt')
     model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/420_73.9.pt'))
