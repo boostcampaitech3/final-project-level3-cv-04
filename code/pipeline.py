@@ -1,7 +1,7 @@
 from unicodedata import name
 import utils
 import dataset
-
+import os
 import torch
 import torchvision
 import numpy as np
@@ -23,15 +23,15 @@ def bbox_concat(bbox_list):
     phase = []
     for text in texts_:
         new_phase = []
-        if abs(text[1][1] - tmp) <= ((text[5][1] - text[1][1])/2) :  #  같은 라인 판별 / 글자의 반 이내면 
+        if abs(text[1][1] - tmp) <= ((text[5][1] - text[1][1])/1.5) :  #  같은 라인 판별 / 글자의 반 이내면 
             phase.append(text)
-            tmp = text[1][1]
-    else: # tmp값 벌어지면 다음 라인 취급
-        phase.sort(key = lambda x: x[1][0]) # x로 정렬
-        align.append(phase)
-        new_phase.append(text)
-        phase = new_phase
-        tmp = text[2][1]
+            tmp = min(text[2][1], text[1][1])
+        else: # tmp값 벌어지면 다음 라인 취급
+            phase.sort(key = lambda x: x[1][0]) # x로 정렬
+            align.append(phase)
+            new_phase.append(text)
+            phase = new_phase
+            tmp = min(text[2][1], text[1][1])
 
     phase.sort(key = lambda x: x[1][0])
     align.append(phase) # 마지막 줄 추가
@@ -43,7 +43,7 @@ def bbox_concat(bbox_list):
     for i in align:
         tmp = i[0][1][0]
         for n in i:
-            if n[1][0] - tmp <= 100: 
+            if n[1][0] - tmp <= ((n[2][0]-n[1][0])/len(n[3]))/1.5: 
                 word.append(n[3])
                 tmp = n[2][0]
             else:
@@ -57,7 +57,7 @@ def bbox_concat(bbox_list):
         s = "".join(i)
         print(s)
 
-    print(line)
+    # print(line)
 
 
 def get_3chanel_key_masked_image(image,ocr,img_path):
@@ -124,10 +124,16 @@ def pipeline(img_path,model,device):
 
 
 if __name__ == '__main__':
-    
-    img_path = '/opt/ml/upstage_OCR/Data set/real data/general/general122.jpg'
+
+    folder_path = '/opt/ml/upstage_OCR/Data set/real data/receipt'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/model.pt')
     model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/90.pt'))
 
-    pipeline(img_path,model,device)
+    imagelist = sorted(os.listdir(folder_path))
+    for path in imagelist:
+        imgpath = os.path.join(folder_path, path)
+        print(path)
+        pipeline(imgpath,model,device)
+        print("=========================================================================================")
+        
