@@ -125,9 +125,9 @@ def pipeline(img_path,model,device):
 
 if __name__ == '__main__':
     
-    img_path = '/opt/ml/upstage_OCR/Data set/real data/general/general005.jpg'
+    img_path = '/opt/ml/upstage_OCR/Data set/real data/general/general122.jpg'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/model.pt')
-    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/420_73.9.pt'))
+    model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/model.pt')
+    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/90.pt'))
 
     pipeline(img_path,model,device)

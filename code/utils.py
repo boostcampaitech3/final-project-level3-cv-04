@@ -163,12 +163,12 @@ def img_rotate(image,mask=None):
     ]
     alb_transform = A.Compose(func_list)
 
-    if mask:
-        transformed = alb_transform(image=np.array(image),mask=mask)
-        return transformed['image'],transformed['mask']
-    else:
+    if type(mask) == type(None):
         transformed = alb_transform(image=np.array(image))
         return transformed['image']
+    else:
+        transformed = alb_transform(image=np.array(image),mask=mask)
+        return transformed['image'],transformed['mask']
 
 
 

@@ -65,8 +65,7 @@ class WifiDataset_segmentation(Dataset):
             c2 = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=False)
             c3 = coco_to_mask(ocr_coco,image.shape,key_list=key_list,get_each_mask=False)
 
-            if mode == 'test':
-                _,mask_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
+            _,mask_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
 
             t = torchvision.transforms.ToPILImage()
             c2 = np.array(t(c2))
