@@ -247,8 +247,8 @@ def get_ocr(img_path,api_url:str) -> dict:
         image = img_path
         image.save(output, format="JPEG")
         file_dict = {"file": output.getvalue()}
-    headers = {"secret": "Boostcamp0000"}
-    response = requests.post(api_url, headers=headers, files=file_dict)
+    headers = {"secret": "Boostcamp0001"}
+    response = requests.post("http://118.222.179.32:30001/ocr/", headers=headers, files=file_dict)
     return response.json()
 
 
@@ -277,7 +277,7 @@ def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> tor
     c1 = torch.zeros((1,image_size[0], image_size[1]))
     for ann in coco.anns.values():
         if key_list:
-            if ann['text'] in key_list:
+            if ann['text'].upper() in key_list:
                 c1[0][coco.annToMask(ann) == 1] = 255
         else:
             c1[0][coco.annToMask(ann) == 1] = 255
