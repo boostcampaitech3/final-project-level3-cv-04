@@ -26,14 +26,17 @@ class main():
         self.validate = main_config['validate']
         self.eval_interval = main_config['eval_interval']
         self.lr = main_config['lr']
-        ocr_url = "http://118.222.179.32:30000/ocr/"
+        ocr_url = "http://118.222.179.32:30001/ocr/"
         
         self.model = model.UNetPlusPlus(out_ch=3,height=512,width=512)
         self.criterion = loss.FocalLoss()
         self.optimizer = torch.optim.Adam(params = self.model.parameters(), lr = self.lr, weight_decay=1e-6)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-        os.makedirs(main_config['save_path'])
+        save_path = main_config['save_path']
+        os.makedirs(save_path,exist_ok=True)
+        f = open(f'{save_path}/log.txt','w')
+        f.close()
 
         transform1 = A.Compose([
             A.LongestMaxSize(max_size=512, interpolation=1),
@@ -61,15 +64,22 @@ class main():
                 ],p=0.5),
             ToTensorV2()
         ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
+        val_transform = A.Compose([
+            A.LongestMaxSize(max_size=512, interpolation=1),
+            A.PadIfNeeded(min_height=512, min_width=512, border_mode=0, value=(0,0,0)),
+            # A.Resize(512,512),
+            ToTensorV2()
+        ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
 
-        transform_list = [transform1,transform2,transform1]
+        train_transform_list = [transform1,transform2,transform1]
+        valid_transform_list = [val_transform,val_transform]
 
         train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
             for ann_path,image_path,transform in \
-                zip(main_config['train_json_path_list'],main_config['train_image_path_list'],transform_list)]
+                zip(main_config['train_json_path_list'],main_config['train_image_path_list'],train_transform_list)]
         val_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
             for ann_path,image_path,transform in \
-                zip(main_config['val_json_path_list'],main_config['val_image_path_list'],transform_list)]
+                zip(main_config['val_json_path_list'],main_config['val_image_path_list'],valid_transform_list)]
 
         train_dataset = dataset.Concat_Dataset(train_dataset_list)
         val_dataset = dataset.Concat_Dataset(val_dataset_list)
@@ -176,8 +186,14 @@ class main():
 
             
             avrg_loss = total_loss / cnt
+
             print(f'Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
                     mIoU: {round(mIoU, 4)}')
+            save_path = main_config['save_path']
+            f = open(f'{save_path}/log.txt','a')
+            f.write(f'Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
+                    mIoU: {round(mIoU, 4)}')
+            f.close()
             print(f'IoU by class : {IoU_by_class}')
             
         return avrg_loss
