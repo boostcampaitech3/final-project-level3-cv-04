@@ -84,7 +84,7 @@ class WifiDataset_segmentation(Dataset):
         image = self.x_list[idx]
         y = self.y_list[idx]
         image_info = self.img_infos[idx][0]
-        origin_width, origin_height = image.size
+        origin_height, origin_width = image.shape
         
         c2,c3 = self.c_list[idx]
         if self.mode == 'test':
