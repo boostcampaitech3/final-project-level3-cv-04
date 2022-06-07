@@ -12,11 +12,12 @@ import utils
 from utils import get_ocr, ocr_to_coco, coco_to_mask
 
 id_list = ['ID', '아이디', 'NETWORK', '네트워크', 'IP', 'WIFI', "WIFIID"]
-id_list += list(map(lambda x:x + ':', id_list))
-id_list += list(map(lambda x:x + '_', id_list))
+seperater = [':','.','_']
+for s in seperater:
+    id_list += list(map(lambda x:x + s, id_list))
 pw_list = ['PW', '비밀번호','PASSCODE', 'PASSWORD', '패스워드', 'PIN', 'P.W', '비번', "WIFIPW"]
-pw_list += list(map(lambda x:x + ':', pw_list))
-pw_list += list(map(lambda x:x + '_', pw_list))
+for s in seperater:
+    pw_list += list(map(lambda x:x + s, pw_list))
 wifi_list = ['WIFI', 'WI-FI', '와이파이', ':', '/']
 key_list = id_list + pw_list + wifi_list
 

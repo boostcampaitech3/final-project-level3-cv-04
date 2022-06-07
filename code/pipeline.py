@@ -2,6 +2,7 @@ from unicodedata import name
 import utils
 import dataset
 import os
+import json
 import torch
 import torchvision
 import numpy as np
@@ -68,7 +69,7 @@ def get_3chanel_key_masked_image(image,ocr,img_path):
     return torch.cat((torch.tensor(image).unsqueeze(0),c2,c3),dim=0), mask_list
 
 
-def pipeline(img_path,model,device):
+def pipeline(img_path,model,device,out_path=None,idx=None):
     ### 1. img_path --> PIL image ###
     image = Image.open(img_path)
     image = ImageOps.exif_transpose(image).convert('L')      #image:PIL
@@ -112,7 +113,9 @@ def pipeline(img_path,model,device):
     plt.imshow(PIL_transform(out*0.3))
     plt.subplot(1,4,4)
     plt.imshow(PIL_transform(out2*0.3))
-    plt.savefig(f'./out.jpg')
+    if out_path:
+        os.makedirs(out_path,exist_ok=True)
+        plt.savefig(f'{out_path}/{idx}.jpg')
 
     print(out_list)
     ### TODO post processing: id, pw value list
@@ -120,7 +123,14 @@ def pipeline(img_path,model,device):
         bbox_concat(out_list['id'])
     if out_list['pw']:
         bbox_concat(out_list['pw'])
-    return
+
+    fin_out = {}
+    fin_out['id'] = [out[0] for out in out_list['id']]
+    fin_out['pw'] = [out[0] for out in out_list['pw']]
+
+    if out_path:
+        json.dump(fin_out,open(f'{out_path}/{idx}.json','w'),indent=4)
+    return fin_out
 
 
 if __name__ == '__main__':
@@ -129,13 +139,13 @@ if __name__ == '__main__':
     folder_path = '/opt/ml/upstage_OCR/code/test set'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-
+    out_path = './out/test'
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/model.pt')
-    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/90.pt'))
+    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/540_80.4.pt'))
 
     imagelist = sorted(os.listdir(folder_path))
     for path in imagelist:
         imgpath = os.path.join(folder_path, path)
         print(path)
-        pipeline(imgpath,model,device)
+        pipeline(imgpath,model,device,out_path,path.split('.')[0])
         print("=========================================================================================")
