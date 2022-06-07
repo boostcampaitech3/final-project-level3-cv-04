@@ -57,7 +57,8 @@ class main():
                 ],p=0.5),
             ToTensorV2()
         ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
-        transform_list = [transform1,transform2]
+
+        transform_list = [transform1,transform2,transform1]
 
         train_dataset_list = [dataset.WifiDataset_segmentation(ann_path,ocr_url,image_path,transform=transform) \
             for ann_path,image_path,transform in \

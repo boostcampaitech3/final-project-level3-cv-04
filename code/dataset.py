@@ -11,10 +11,10 @@ from tqdm import tqdm
 import utils
 from utils import get_ocr, ocr_to_coco, coco_to_mask
 
-id_list = ['ID', '아이디', 'NETWORK', '네트워크', 'IP', 'WIFI']
+id_list = ['ID', '아이디', 'NETWORK', '네트워크', 'IP', 'WIFI', "WIFIID"]
 id_list += list(map(lambda x:x + ':', id_list))
 id_list += list(map(lambda x:x + '_', id_list))
-pw_list = ['PW', '비밀번호','PASSCODE', 'PASSWORD', '패스워드', 'PIN', 'P.W', '비번']
+pw_list = ['PW', '비밀번호','PASSCODE', 'PASSWORD', '패스워드', 'PIN', 'P.W', '비번', "WIFIPW"]
 pw_list += list(map(lambda x:x + ':', pw_list))
 pw_list += list(map(lambda x:x + '_', pw_list))
 wifi_list = ['WIFI', 'WI-FI', '와이파이', ':', '/']
@@ -65,8 +65,7 @@ class WifiDataset_segmentation(Dataset):
             c2 = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=False)
             c3 = coco_to_mask(ocr_coco,image.shape,key_list=key_list,get_each_mask=False)
 
-            if mode == 'test':
-                _,mask_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
+            _,mask_out = coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
 
             t = torchvision.transforms.ToPILImage()
             c2 = np.array(t(c2))

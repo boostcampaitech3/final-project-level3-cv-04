@@ -165,12 +165,12 @@ def img_rotate(image,mask=None):
     ]
     alb_transform = A.Compose(func_list)
 
-    if mask:
-        transformed = alb_transform(image=np.array(image),mask=mask)
-        return transformed['image'],transformed['mask']
-    else:
+    if type(mask) == type(None):
         transformed = alb_transform(image=np.array(image))
         return transformed['image']
+    else:
+        transformed = alb_transform(image=np.array(image),mask=mask)
+        return transformed['image'],transformed['mask']
 
 
 
@@ -251,6 +251,7 @@ def get_ocr(img_path,api_url:str) -> dict:
         file_dict = {"file": output.getvalue()}
     headers = {"secret": "Boostcamp0001"}
     response = requests.post(api_url, headers=headers, files=file_dict)
+
     return response.json()
 
 
@@ -279,7 +280,7 @@ def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> tor
     c1 = torch.zeros((1,image_size[0], image_size[1]))
     for ann in coco.anns.values():
         if key_list:
-            if ann['text'] in key_list:
+            if ann['text'].upper() in key_list:
                 c1[0][coco.annToMask(ann) == 1] = 255
         else:
             c1[0][coco.annToMask(ann) == 1] = 255
