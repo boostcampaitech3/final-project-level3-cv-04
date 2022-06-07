@@ -9,7 +9,7 @@ import os
 from tqdm import tqdm
 
 import utils
-from utils import get_ocr, ocr_to_coco, coco_to_mask
+from utils import get_ocr, ocr_to_coco, coco_to_mask, new_coordinates_after_resize_img
 
 id_list = ['ID', '아이디', 'NETWORK', '네트워크', 'IP', 'WIFI', "WIFIID"]
 seperater = [':','.','_']
@@ -84,6 +84,7 @@ class WifiDataset_segmentation(Dataset):
         image = self.x_list[idx]
         y = self.y_list[idx]
         image_info = self.img_infos[idx][0]
+        origin_width, origin_height = image.size
         
         c2,c3 = self.c_list[idx]
         if self.mode == 'test':
@@ -104,9 +105,12 @@ class WifiDataset_segmentation(Dataset):
         if self.mode == 'test':
             t_ocr_list = []
             for (mask,texts),location in zip(mask_list,ocr_list['ocr']['word']):
-                transformed = self.transfrom(image=np.array(mask))
-                t_ocr_list.append((transformed['image'],(texts,location['points'])))
-
+                transformed = self.transfrom(image=np.array(mask))                
+                new_coordinates = new_coordinates_after_resize_img(
+                                                    original_size=(origin_width, origin_height), 
+                                                    new_size=(512,512), 
+                                                    original_coordinate=location['points'])
+                t_ocr_list.append((transformed['image'],(texts, new_coordinates)))
             return x,y,image_info,t_ocr_list
 
         return x,y,image_info,ocr_list

@@ -317,3 +317,15 @@ def img_to_focusmask(image_path:str,api_url:str,key_list) -> np.array:
     out = np.concatenate((image_gray,c1,c2),axis=2)
 
     return out,mask_list,image
+
+def new_coordinates_after_resize_img(original_size, new_size, original_coordinate):
+    original_size = np.array(original_size)
+    new_size = np.array(new_size)
+    new_coordinate = []
+    for point in original_coordinate:
+        point = np.array(point)
+        xy = point/(original_size/new_size)
+        x, y = int(xy[0]), int(xy[1])
+        new_coordinate.append([x,y])
+
+    return new_coordinate
