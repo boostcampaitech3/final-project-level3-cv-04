@@ -77,7 +77,7 @@ def pipeline(img_path,model,device):
     image = utils.img_rotate(image)             #image:np.array
 
     ### 3. get ocr ###
-    ocr = utils.get_ocr(Image.fromarray(image),"http://118.222.179.32:30000/ocr/")
+    ocr = utils.get_ocr(Image.fromarray(image),"http://118.222.179.32:30001/ocr/")
 
     ### 4. get key masked image, each mask list ###
     x, mask_list = get_3chanel_key_masked_image(image,ocr,img_path)     # x:torch.tensor
@@ -126,10 +126,11 @@ def pipeline(img_path,model,device):
 if __name__ == '__main__':
 
 
-    folder_path = '/opt/ml/upstage_OCR/Data set/real data/receipt'
+    folder_path = '/opt/ml/upstage_OCR/code/test set'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/model.pt')
-    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/420_73.9.pt'))
+    # model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/420_73.9.pt'))
+    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/70.pt'))
 
     imagelist = sorted(os.listdir(folder_path))
     for path in imagelist:
