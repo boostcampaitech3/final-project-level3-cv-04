@@ -128,13 +128,12 @@ if __name__ == '__main__':
     folder_path = '/opt/ml/upstage_OCR/Data set/real data/receipt'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/model.pt')
-    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_fix_key/160_78.pt'))
+    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/90.pt'))
 
-    # imagelist = sorted(os.listdir(folder_path))
-    # for path in imagelist:
-        # imgpath = os.path.join(folder_path, path)
-        # print(path)
-    imgpath = '/opt/ml/upstage_OCR/Data set/kkkk.png'
-    pipeline(imgpath,model,device)
-    print("=========================================================================================")
+    imagelist = sorted(os.listdir(folder_path))
+    for path in imagelist:
+        imgpath = os.path.join(folder_path, path)
+        print(path)
+        pipeline(imgpath,model,device)
+        print("=========================================================================================")
         
