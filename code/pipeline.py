@@ -128,9 +128,10 @@ if __name__ == '__main__':
 
     folder_path = '/opt/ml/upstage_OCR/code/test set'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/model.pt')
-    # model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/420_73.9.pt'))
-    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0/70.pt'))
+
+
+    model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/model.pt')
+    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/90.pt'))
 
     imagelist = sorted(os.listdir(folder_path))
     for path in imagelist:
@@ -138,5 +139,3 @@ if __name__ == '__main__':
         print(path)
         pipeline(imgpath,model,device)
         print("=========================================================================================")
-
-        

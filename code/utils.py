@@ -249,8 +249,10 @@ def get_ocr(img_path,api_url:str) -> dict:
         image = img_path
         image.save(output, format="JPEG")
         file_dict = {"file": output.getvalue()}
+
     headers = {"secret": "Boostcamp0001"}
     response = requests.post(api_url, headers=headers, files=file_dict)
+
 
     return response.json()
 
