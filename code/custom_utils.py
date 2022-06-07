@@ -253,24 +253,25 @@ def get_ocr(img_path,api_url:str) -> dict:
 
 
 def ocr_to_coco(ocr_result,image_path,image_shape:tuple) -> COCO:
-    coco_dict = {
-        'images':[{'filename':image_path,'height': image_shape[0],'width': image_shape[1],'id': 0}],
-        'categories':[{'id':1,"name": "text"}],
-        'annotations':[]
-    }
+	image_path='None'
+	coco_dict = {
+		'images':[{'filename':image_path,'height': image_shape[0],'width': image_shape[1],'id': 0}],
+		'categories':[{'id':1,"name": "text"}],
+		'annotations':[]
+	}
 
-    for i,box in enumerate(ocr_result['ocr']['word']):
-        coco_dict['annotations'].append({
-            'id':i,
-            'image_id':0,
-            'category_id':1,
-            'text': box['text'],
-            'segmentation': [[]]
-        })
-        for point in box['points']:
-            coco_dict['annotations'][-1]['segmentation'][0] += point
+	for i,box in enumerate(ocr_result['ocr']['word']):
+		coco_dict['annotations'].append({
+			'id':i,
+			'image_id':0,
+			'category_id':1,
+			'text': box['text'],
+			'segmentation': [[]]
+		})
+		for point in box['points']:
+			coco_dict['annotations'][-1]['segmentation'][0] += point
 
-    return Custom_COCO(coco_dict)
+	return Custom_COCO(coco_dict)
 
 
 def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> torch.tensor:

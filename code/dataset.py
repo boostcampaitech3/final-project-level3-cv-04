@@ -8,8 +8,8 @@ from pycocotools.coco import COCO
 import os
 from tqdm import tqdm
 
-import utils
-from utils import get_ocr, ocr_to_coco, coco_to_mask
+import custom_utils
+from custom_utils import get_ocr, ocr_to_coco, coco_to_mask
 
 id_list = ['ID', '아이디', 'NETWORK', '네트워크', 'IP', 'WIFI', "WIFIID"]
 id_list += list(map(lambda x:x + ':', id_list))
@@ -55,7 +55,7 @@ class WifiDataset_segmentation(Dataset):
                 y[coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
 
             # image preprocess (PIL --> numpy)
-            image, y = utils.img_rotate(image,y)
+            image, y = custom_utils.img_rotate(image,y)
 
             # get ocr out
             ocr_out = get_ocr(Image.fromarray(image),api_url)
@@ -145,7 +145,7 @@ class five_channel_wifi_dataset(Dataset):
                 y[coco.annToMask(ann[0]) == 1] = ann[0]['category_id']
 
             # image preprocess (PIL --> numpy)
-            image, y = utils.img_rotate(image,y)
+            image, y = custom_utils.img_rotate(image,y)
 
             # get ocr out
             ocr_out = get_ocr(Image.fromarray(image),api_url)
