@@ -36,7 +36,9 @@ class main():
         os.makedirs(main_config['save_path'])
 
         transform1 = A.Compose([
-            A.Resize(512,512),
+            A.LongestMaxSize(max_size=512, interpolation=1),
+            A.PadIfNeeded(min_height=512, min_width=512, border_mode=0, value=(0,0,0)),
+            # A.Resize(512,512),
             # A.GaussNoise(var_limit=(50,100)),
             # A.MotionBlur(blur_limit=5),
             A.Blur(5),
@@ -47,7 +49,9 @@ class main():
             ToTensorV2()
         ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
         transform2 = A.Compose([
-            A.Resize(512,512),
+            A.LongestMaxSize(max_size=512, interpolation=1),
+            A.PadIfNeeded(min_height=512, min_width=512, border_mode=0, value=(0,0,0)),
+            # A.Resize(512,512),
             A.GaussNoise(var_limit=(50,100)),
             A.MotionBlur(blur_limit=5),
             A.Blur(5),

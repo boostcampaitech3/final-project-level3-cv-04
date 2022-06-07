@@ -25,7 +25,9 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 out_folder = 'unet++_3c_rotate_k0'
 
 transform = A.Compose([
-    A.Resize(512,512),
+    A.LongestMaxSize(max_size=512, interpolation=1),
+    A.PadIfNeeded(min_height=512, min_width=512, border_mode=0, value=(0,0,0)),
+    # A.Resize(512,512),
     ToTensorV2()
 ], additional_targets={'mask2': 'mask', 'mask3': 'mask'})
 
