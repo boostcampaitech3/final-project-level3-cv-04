@@ -15,6 +15,7 @@ import streamlit as st
 import requests
 import io
 import rule_based_method as rule
+import json
 def bbox_concat(bbox_list):
 	texts = []
 	for ind, anno in enumerate(bbox_list):
@@ -77,12 +78,12 @@ def pipeline(img,model,device):
 	### 1. img_path --> PIL image ###
 	# image = Image.open(img_path)
 	# image = ImageOps.exif_transpose(image).convert('L')      #image:PIL
-	image = Image.fromarray(img.astype('uint8'), 'RGB')
-	image = ImageOps.exif_transpose(image).convert('L')
+	image_3c = Image.fromarray(img.astype('uint8'), 'RGB')
+	image_g = ImageOps.exif_transpose(image_3c).convert('L')
 
 	### 2. PIL image rotate ###
-	image = custom_utils.img_rotate(image)             #image:np.array
-
+	image = custom_utils.img_rotate(image_g)             #image:np.array
+	
 	### 3. get ocr ###
 	ocr = custom_utils.get_ocr(Image.fromarray(image),"http://118.222.179.32:30001/ocr/")
 
@@ -106,63 +107,79 @@ def pipeline(img,model,device):
 
 	### 6. segmentation map + mask_list --> id, pw value classification list ###
 	classificated_image,out_list = custom_utils.seg_to_classification(pred,t_ocr_list,device)
+	
+	fin_out = {}
+	fin_out['id'] = [out[0] for out in out_list['id']]
+	fin_out['pw'] = [out[0] for out in out_list['pw']]
 
-	# ### save images ##
-	# out = torch.argmax(pred,dim=0)
-	# out2 = torch.argmax(classificated_image,dim=0)
-	# plt.figure(figsize=(20,20))
-	# plt.subplot(1,4,1)
-	# plt.imshow(image)
-	# plt.subplot(1,4,2)
-	# plt.imshow(PIL_transform(x))
-	# plt.subplot(1,4,3)
-	# plt.imshow(PIL_transform(out*0.3))
-	# plt.subplot(1,4,4)
-	# plt.imshow(PIL_transform(out2*0.3))
-	# plt.savefig(f'./out.jpg')
+	return classificated_image,fin_out['id'],fin_out['pw'],Image.fromarray(custom_utils.img_rotate(image_3c).astype('uint8'), 'RGB')
 
-
-	### TODO post processing: id, pw value list
-	ret_id = -1
-	ret_pw = -1
-	if out_list['id']:
-		ret_id=bbox_concat(out_list['id'])
-	if out_list['pw']:
-		ret_pw=bbox_concat(out_list['pw'])
-	return classificated_image,ret_id,ret_pw
-
+def output_func(poster):
+	st.write(uploaded_file.name)
+	poster=poster['im'][:,:,::-1] #BGR -> RGB
+	ret_img,ret_id,ret_pw,crop_img=pipeline(poster,seg_model,device) # ret_img : Tensor
+	ret_img=torchvision.transforms.ToPILImage()(ret_img) 
+	output = io.BytesIO()
+	image = ret_img
+	image.save(output, format="JPEG")
+	ocr_img,ann_dict,area_texts = rule.read_img(crop_img,'http://118.222.179.32:30001/ocr/')
+	st.image(ocr_img,caption='ocr Image')
+	st.image(image, caption='after pipeline Image')
+	id=st.text_input('ID',ret_id)
+	pw=st.text_input('PW',ret_pw)
+	check = st.checkbox('check string')
+	if check:
+		if st.button('submit'):
+			save_path='./user_data'
+			user_dict={'user_anno_id':id,'user_anno_pw':pw}
+			file_name=uploaded_file.name.split('.')[0]
+			crop_img.save(os.path.join(save_path,uploaded_file.name),uploaded_file.name.split('.')[1])
+			with open(os.path.join(save_path,f'{file_name}.json'),'w') as f:
+				json.dump(user_dict, f)
 
 if __name__ == '__main__':
-
-	uploaded_file = st.file_uploader("img",type=['png','jpg','jpeg'])
+	with st.sidebar:
+		uploaded_file = st.file_uploader("img",type=['png','jpg','jpeg'])
 
 	if uploaded_file:
-
-	# folder_path = '/opt/ml/upstage_OCR/Data set/real data/receipt'
 		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
 		seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
 		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
-		result = det_model(Image.open(io.BytesIO(uploaded_file.getvalue())))
-		result.display(render=False)
+		input_img=Image.open(io.BytesIO(uploaded_file.getvalue()))
+		result = det_model(input_img)
+		result.display(render=False)	
 		crops=result.crop(save=False)
-		for crop in crops:
-			if 'wifi_poster' in crop['label']:
-				poster=crop['im'][:,:,::-1] #BGR -> RGB
-				st.image(poster, caption='croped Image')
-				ret_img,ret_id,ret_pw=pipeline(poster,seg_model,device) # ret_img : Tensor
-				ret_img=torchvision.transforms.ToPILImage()(ret_img) 
-				output = io.BytesIO()
-				image = ret_img
-				image.save(output, format="JPEG")
-				ocr_img,ann_dict,area_texts = rule.read_img(poster,'http://118.222.179.32:30001/ocr/')
-				st.image(ocr_img,caption='ocr Image')
-				st.image(image, caption='after pipeline Image')
-				st.write(f"ID: {ret_id} // PW: {ret_pw}")
-	# imagelist = sorted(os.listdir(folder_path))
-	# for path in imagelist:
-	# 	imgpath = os.path.join(folder_path, path)
-	# 	print(path)
-	# 	pipeline(imgpath,seg_model,device)
-	# 	print("=========================================================================================")
 		
+		posters=[]
+		logos=[]
+		for crop in crops:
+			if int(crop['cls'].item())==2:
+				posters.append(crop)
+			else:
+				logos.append(crop)
+
+		for poster in posters:	
+			poster_upx=poster['box'][0].item()
+			poster_upy=poster['box'][1].item()
+			poster_downx=poster['box'][2].item()
+			poster_downy=poster['box'][3].item()
+
+			for logo in logos:
+				logo_upx=logo['box'][0].item()
+				logo_upy=logo['box'][1].item()
+				logo_downx=logo['box'][2].item()
+				logo_downy=logo['box'][3].item()
+
+				if poster_upx<logo_upx and poster_upy<logo_upy and logo_downx<poster_downx and logo_downy<poster_downy:
+					output_func(poster)
+
+			if not logo:
+				output_func(poster)
+
+
+### TODO : logo 가 없을때, 출력을 표로바꿈, 수정하기 버튼 추가->사용자입력 추가, 
+
+
+
+# streamlit run pipeline.py --server.port 30001 --server.fileWatcherType none

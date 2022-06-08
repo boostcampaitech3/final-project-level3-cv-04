@@ -103,9 +103,9 @@ def read_img(image:np.array,ocr_url,target_h: int = 1000) -> Image:
 	# image_bytes = image.getvalue()
 	# img = Image.open(io.BytesIO(image_bytes))
 	# img = ImageOps.exif_transpose(img).convert('RGBA')  # 이미지 정보에 따라 이미지를 회전
+	img=image
+	# img=Image.fromarray(image.astype('uint8'), 'RGB')  #PIL
 	
-	img=Image.fromarray(image.astype('uint8'), 'RGB')  #PIL
-
 	
 
 	area = None
