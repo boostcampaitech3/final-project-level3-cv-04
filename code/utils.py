@@ -145,7 +145,7 @@ def img_rotate(image,mask=None):
 
         costheta = max(horizontal_list)[0] / slope(xlen, ylen)
         theta = math.acos(costheta)
-        degree = round(theta * 57.29,3)
+        degree = round(theta * 57.29,1)
 
         if thetaplus == True:
             degree = degree
