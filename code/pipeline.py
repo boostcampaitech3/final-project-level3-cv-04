@@ -136,12 +136,12 @@ def pipeline(img_path,model,device,out_path=None,idx=None):
 if __name__ == '__main__':
 
 
-    folder_path = '/opt/ml/upstage_OCR/code/test set'
+    folder_path = '/opt/ml/upstage_OCR/Data set/real data/general'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     out_path = './out/test/general'
     model = torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/model.pt')
-    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/unet++_3c_rotate_k0+gen+receipt/280_79.pt'))
+    model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/480.pt'))
 
     imagelist = sorted(os.listdir(folder_path))
     for path in imagelist:
