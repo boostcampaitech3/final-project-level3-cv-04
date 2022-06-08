@@ -1,0 +1,30 @@
+# -- path setting
+train_json_path_list : [
+            '../Data set/annotations/train_general_cleaned_1_k3.json',
+            '../Data set/annotations/gen_ann.json',
+            '../Data set/annotations/train_receipt_k3.json'
+        ]
+val_json_path_list : [
+            '../Data set/annotations/test_general_cleaned_1_k3.json',
+            '../Data set/annotations/test_receipt_k3.json'
+        ]
+train_image_path_list : [
+            '../Data set/real data/general',
+            '../Data set/real data/gen_imgs',
+            '../Data set/real data/receipt'
+        ]
+val_image_path_list : [
+            '../Data set/real data/general',
+            '../Data set/real data/receipt'
+        ]
+
+save_path : './saved/c1_k3'
+
+# -- hyperparameter
+epochs : 1000
+batch_size : 4
+lr : 0.0001
+
+# -- validation
+validate : True
+eval_interval : 10

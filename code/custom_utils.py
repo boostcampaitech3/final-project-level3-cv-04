@@ -129,7 +129,9 @@ def img_rotate(image,mask=None):
 
         for idx, anno in enumerate(annos):
             xlen = anno['points'][1][0] - anno['points'][0][0] # x축 길이 차 
-            horizontal_list.append((xlen, idx))
+            ylen = anno['points'][0][1] - anno['points'][1][1] # y축 길이 차
+            ylen = abs(ylen)
+            horizontal_list.append((slope(xlen,ylen), idx)) # 가로 변 길이 저장
 
         longest = max(horizontal_list)[1]
 
@@ -143,7 +145,7 @@ def img_rotate(image,mask=None):
 
         costheta = max(horizontal_list)[0] / slope(xlen, ylen)
         theta = math.acos(costheta)
-        degree = round(theta * 57.29,3)
+        degree = round(theta * 57.29,1)
 
         if thetaplus == True:
             degree = degree
@@ -151,7 +153,7 @@ def img_rotate(image,mask=None):
             degree = -degree
         return degree
 
-    ann_dict = get_ocr(image, "http://118.222.179.32:30000/ocr/")
+    ann_dict = get_ocr(image, "http://118.222.179.32:30001/ocr/")
     annos = ann_dict['ocr']['word']
 
     degree = get_degree(annos)
@@ -247,8 +249,11 @@ def get_ocr(img_path,api_url:str) -> dict:
         image = img_path
         image.save(output, format="JPEG")
         file_dict = {"file": output.getvalue()}
+
     headers = {"secret": "Boostcamp0001"}
-    response = requests.post("http://118.222.179.32:30001/ocr/", headers=headers, files=file_dict)
+    response = requests.post(api_url, headers=headers, files=file_dict)
+
+
     return response.json()
 
 
