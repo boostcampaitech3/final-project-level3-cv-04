@@ -136,7 +136,7 @@ def pipeline(img_path,model,device,out_path=None,idx=None):
 if __name__ == '__main__':
 
 
-    folder_path = '/opt/ml/upstage_OCR/Data set/real data/general'
+    folder_path = '/opt/ml/upstage_OCR/code/test set'
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     out_path = './out/test/general'

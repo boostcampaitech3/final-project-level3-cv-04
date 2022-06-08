@@ -9,7 +9,6 @@ import requests
 import math
 import albumentations as A
 import cv2
-import imutils
 import os
 import torch
 import torchvision
@@ -129,14 +128,10 @@ def img_rotate(image,mask=None):
         horizontal_list = []
 
         for idx, anno in enumerate(annos):
-            xlen = anno['points'][1][0] - anno['points'][0][0] # x축 길이 차
+            xlen = anno['points'][1][0] - anno['points'][0][0] # x축 길이 차 
             ylen = anno['points'][0][1] - anno['points'][1][1] # y축 길이 차
             ylen = abs(ylen)
-            xlen2 = anno['points'][2][0] - anno['points'][1][0] # x축 길이 차
-            xlen2 = abs(xlen2)
-            ylen2 = anno['points'][1][1] - anno['points'][2][1] # y축 길이 차
-            ylen2 = abs(ylen2)
-            horizontal_list.append((slope(xlen,ylen)/slope(xlen2,ylen2), idx, anno["text"],xlen,ylen))
+            horizontal_list.append((slope(xlen,ylen), idx)) # 가로 변 길이 저장
 
         longest = max(horizontal_list)[1]
 
@@ -163,12 +158,19 @@ def img_rotate(image,mask=None):
 
     degree = get_degree(annos)
     
+    func_list = [
+    A.Rotate(p=1.0, limit=[degree,degree],
+    border_mode=cv2.BORDER_CONSTANT
+    ),
+    ]
+    alb_transform = A.Compose(func_list)
+
     if type(mask) == type(None):
-        rotated = imutils.rotate_bound(np.array(image), -degree)
-        return rotated
+        transformed = alb_transform(image=np.array(image))
+        return transformed['image']
     else:
-        rotated = imutils.rotate_bound(np.array(image), -degree, mask = mask )
-        return rotated, rotated['mask']
+        transformed = alb_transform(image=np.array(image),mask=mask)
+        return transformed['image'],transformed['mask']
 
 
 
