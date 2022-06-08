@@ -28,7 +28,8 @@ class main():
         self.lr = main_config['lr']
         ocr_url = "http://118.222.179.32:30001/ocr/"
         
-        self.model = model.UNetPlusPlus(out_ch=3,height=512,width=512)
+        # self.model = model.UNetPlusPlus(out_ch=3,height=512,width=512)
+        self.model = model.UNet_3Plus(n_classes=3)
         self.criterion = loss.FocalLoss()
         self.optimizer = torch.optim.Adam(params = self.model.parameters(), lr = self.lr, weight_decay=1e-6)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
