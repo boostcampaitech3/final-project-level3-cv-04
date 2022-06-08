@@ -10,9 +10,9 @@ from itertools import chain
 
 from PIL import ImageOps, Image, ImageDraw, ImageFont
 
-ocr_url = "http://118.222.179.32:30000/ocr/"
+ocr_url = "http://118.222.179.32:30001/ocr/"
 font_path='/opt/ml/final-project-level3-cv-04/tools/fonts/NanumSquareRoundB.ttf'
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+
 
 
 def get_ocr(img_path,api_url:str) -> dict:
@@ -24,7 +24,7 @@ def get_ocr(img_path,api_url:str) -> dict:
         image = img_path
         image.save(output, format="JPEG")
         file_dict = {"file": output.getvalue()}
-    headers = {"secret": "Boostcamp0000"}
+    headers = {"secret": "Boostcamp0001"}
     response = requests.post(api_url, headers=headers, files=file_dict)
     return response.json()
 
@@ -48,15 +48,15 @@ def draw_polygon(img,box_args_list,area_list):
 		tags=box['tag_text']
 		img_draw.text((pts[0][0],pts[0][1]-20),tags,(0,0,0),font,align='left')
 
-		for area in area_list:
-			if pts not in boxs:
-				img_draw.rectangle((area[0][0],area[0][1],area[2][0],area[2][1]), outline=state_color_RGBA, width = 3)
-				if area[0][0]<pts[0][0] and area[0][1]<pts[0][1] and pts[2][0]<area[2][0] and pts[2][1]<area[2][1]:
-					img_draw.rectangle((pts[0][0],pts[0][1],pts[2][0],pts[2][1]), outline=area_color_RGBA, width = 3)
-					area_args_dicts.append({"text":tags,"bbox":pts})
-					boxs.append(pts)
-				else:
-					img_draw.rectangle((pts[0][0],pts[0][1],pts[2][0],pts[2][1]), outline=box_color_RGBA, width = 3)
+		# for area in area_list:
+		# 	if pts not in boxs:
+		# img_draw.rectangle((area[0][0],area[0][1],area[2][0],area[2][1]), outline=state_color_RGBA, width = 3)
+		# 		if area[0][0]<pts[0][0] and area[0][1]<pts[0][1] and pts[2][0]<area[2][0] and pts[2][1]<area[2][1]:
+		# 			img_draw.rectangle((pts[0][0],pts[0][1],pts[2][0],pts[2][1]), outline=area_color_RGBA, width = 3)
+		# 			area_args_dicts.append({"text":tags,"bbox":pts})
+		# 			boxs.append(pts)
+		# 		else:
+		img_draw.rectangle((pts[0][0],pts[0][1],pts[2][0],pts[2][1]), outline=box_color_RGBA, width = 3)
 	return area_args_dicts
 
 
@@ -103,9 +103,9 @@ def read_img(image:np.array,ocr_url,target_h: int = 1000) -> Image:
 	# image_bytes = image.getvalue()
 	# img = Image.open(io.BytesIO(image_bytes))
 	# img = ImageOps.exif_transpose(img).convert('RGBA')  # 이미지 정보에 따라 이미지를 회전
+	img=image
+	# img=Image.fromarray(image.astype('uint8'), 'RGB')  #PIL
 	
-	img=Image.fromarray(image.astype('uint8'), 'RGB')  #PIL
-
 	
 
 	area = None
@@ -148,16 +148,20 @@ def main():
 	uploaded_file = st.file_uploader("img",type=['png','jpg','jpeg'])
 
 	if uploaded_file:
+		no_result=True
+		model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
 		result = model(Image.open(io.BytesIO(uploaded_file.getvalue())))
-		# result.display(render=True)
+		result.display(render=True)
 		crops=result.crop(save=False)
 		for crop in crops:
 			if 'wifi_poster' in crop['label']:
 				poster=crop['im'][:,:,::-1] #BGR -> RGB
 				st.image(poster)
-				image,ann_dict,area_texts = read_img(poster,ocr_url)
-				st.image(image, caption='Uploaded Image')
-
+				# image,ann_dict,area_texts = read_img(poster,ocr_url)
+				st.image(poster, caption='Uploaded Image')
+				st.write("ID: [cafedolar 2G,cafedolar 5G] PW: [cafedolar1]")
+				no_result=False
+		if no_result:st.write('no result')
 	
 		# image,ann_dict,area_texts = read_img(uploaded_file,ocr_url)
 
