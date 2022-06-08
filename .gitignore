@@ -1,9 +1,7 @@
-*.ipynb
 *.out
 
 code/__pycache__
 code/saved
 code/out
-code/yamls
 
 Data set/dataset
