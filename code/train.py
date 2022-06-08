@@ -192,7 +192,7 @@ class main():
             save_path = main_config['save_path']
             f = open(f'{save_path}/log.txt','a')
             f.write(f'Validation #{epoch}  Average Loss: {round(avrg_loss.item(), 4)}, Accuracy : {round(acc, 4)}, \
-                    mIoU: {round(mIoU, 4)}')
+                    mIoU: {round(mIoU, 4)}\n')
             f.close()
             print(f'IoU by class : {IoU_by_class}')
             
