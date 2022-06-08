@@ -173,7 +173,7 @@ def img_rotate(image,mask=None):
         return rotated
     else:
         r_mask = imutils.rotate_bound(mask, -degree)
-        return rotated
+        return rotated, r_mask
 
 
 
