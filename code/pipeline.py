@@ -17,6 +17,7 @@ import requests
 import io
 import rule_based_method as rule
 import json
+from post_processing import post_process
 
 def bbox_concat(bbox_list):
     texts = []
@@ -90,7 +91,7 @@ def get_3chanel_key_masked_image(image,ocr,img_path):
 	c2 = custom_utils.coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=False)
 	c3 = custom_utils.coco_to_mask(ocr_coco,image.shape,key_list=dataset.key_list,get_each_mask=False)
 	_,mask_list = custom_utils.coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
-	print(torch.tensor(image).unsqueeze(0).shape)
+	# print(torch.tensor(image).unsqueeze(0).shape)
 	return torch.cat((torch.tensor(image).unsqueeze(0),c2,c3),dim=0), mask_list
 
 
@@ -130,12 +131,18 @@ def pipeline(img,model,device):
 
 	if out_list['id']:
 		out_list['id'] = bbox_concat(out_list['id'])
+	else:
+		out_list['id'] = []
 	if out_list['pw']:
 		out_list['pw'] = bbox_concat(out_list['pw'])
-
+	else:
+		out_list['pw'] = []
+	out_list = post_process(out_list['id'], out_list['pw'])
+	
 	fin_out = {}
 	fin_out['id'] = [out for out in out_list['id']]
 	fin_out['pw'] = [out for out in out_list['pw']]
+
 
 	return classificated_image,fin_out['id'],fin_out['pw'],Image.fromarray(custom_utils.img_rotate(image_3c).astype('uint8'), 'RGB')
 
@@ -150,6 +157,9 @@ def output_func(poster):
 	ocr_img,ann_dict,area_texts = rule.read_img(crop_img,'http://118.222.179.32:30001/ocr/')
 	st.image(ocr_img,caption='ocr Image')
 	# st.image(image, caption='after pipeline Image') # seg output
+	ret_id = ", ".join(ret_id)
+	ret_pw = ", ".join(ret_pw)
+
 	id=st.text_input('ID',ret_id)
 	pw=st.text_input('PW',ret_pw)
 	check = st.checkbox('check string')
@@ -158,9 +168,17 @@ def output_func(poster):
 			save_path='./user_data'
 			user_dict={'user_anno_id':id,'user_anno_pw':pw}
 			file_name=uploaded_file.name.split('.')[0]
-			crop_img.save(os.path.join(save_path,uploaded_file.name),uploaded_file.name.split('.')[1])
+			crop_img.save(os.path.join(save_path,uploaded_file.name))
 			with open(os.path.join(save_path,f'{file_name}.json'),'w') as f:
 				json.dump(user_dict, f)
+			qr=custom_utils.wifi_qrcode(id,'true','WPA',pw)
+			st.image(qr)
+@st.cache
+def init_func():
+		seg_model = torch.load('./saved/seg_model/model.pt')
+		seg_model.load_state_dict(torch.load('./saved/seg_model/seg_c1_k2.pt'))
+		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='./saved/det_model/yolov5s_wifi_det.pt')
+		return seg_model,det_model
 
 if __name__ == '__main__':
 	with st.sidebar:
@@ -168,9 +186,11 @@ if __name__ == '__main__':
 
 	if uploaded_file:
 		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-		seg_model = torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/model.pt')
-		seg_model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/540.pt'))
-		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/upstage_OCR/code/saved/yolov5s_wifi_det.pt')
+		
+		# st.session_state.seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
+		# st.session_state.seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
+		# st.session_state.det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+		seg_model,det_model=init_func()
 
 		input_img=Image.open(io.BytesIO(uploaded_file.getvalue()))
 		result = det_model(input_img)
@@ -200,7 +220,7 @@ if __name__ == '__main__':
 				if poster_upx<logo_upx and poster_upy<logo_upy and logo_downx<poster_downx and logo_downy<poster_downy:
 					output_func(poster)
 
-			if not logo:
+			if not logos:
 				output_func(poster)
 
 
