@@ -153,9 +153,9 @@ def output_func(poster):
 			st.image(qr)
 @st.cache
 def init_func():
-		seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
-		seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
-		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+		seg_model = torch.load('./saved/seg_model/model.pt')
+		seg_model.load_state_dict(torch.load('./saved/seg_model/seg_c1_k2.pt'))
+		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='./saved/det_model/yolov5s_wifi_det.pt')
 		return seg_model,det_model
 
 if __name__ == '__main__':
@@ -198,7 +198,7 @@ if __name__ == '__main__':
 				if poster_upx<logo_upx and poster_upy<logo_upy and logo_downx<poster_downx and logo_downy<poster_downy:
 					output_func(poster)
 
-			if not logo:
+			if not logos:
 				output_func(poster)
 
 
