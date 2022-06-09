@@ -17,6 +17,7 @@ import requests
 import io
 import rule_based_method as rule
 import json
+
 def bbox_concat(bbox_list):
 	texts = []
 	for ind, anno in enumerate(bbox_list):
@@ -144,9 +145,9 @@ if __name__ == '__main__':
 
 	if uploaded_file:
 		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-		seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
-		seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
-		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+		seg_model = torch.load('/opt/ml/upstage_OCR/code/saved/seg_model/model.pt')
+		seg_model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/seg_model/seg_c1_k2.pt'))
+		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/upstage_OCR/code/saved/det_model/yolov5s_wifi_det.pt')
 		input_img=Image.open(io.BytesIO(uploaded_file.getvalue()))
 		result = det_model(input_img)
 		result.display(render=False)	
