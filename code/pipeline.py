@@ -151,7 +151,7 @@ if __name__ == '__main__':
 		uploaded_file = st.file_uploader("img",type=['png','jpg','jpeg'])
 
 	if uploaded_file:
-		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'
+		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		seg_model = torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/model.pt')
 		seg_model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/540.pt'))
 		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/upstage_OCR/code/saved/yolov5s_wifi_det.pt')
