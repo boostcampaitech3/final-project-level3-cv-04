@@ -17,6 +17,7 @@ import requests
 import io
 import rule_based_method as rule
 import json
+from post_processing import post_process
 
 def bbox_concat(bbox_list):
 	texts = []
@@ -114,9 +115,14 @@ def pipeline(img,model,device):
 
 	if out_list['id']:
 		out_list['id'] = bbox_concat(out_list['id'])
+	else:
+		out_list['id'] = []
 	if out_list['pw']:
 		out_list['pw'] = bbox_concat(out_list['pw'])
-
+	else:
+		out_list['pw'] = []
+	out_list = post_process(out_list['id'], out_list['pw'])
+	
 	fin_out = {}
 	fin_out['id'] = [out for out in out_list['id']]
 	fin_out['pw'] = [out for out in out_list['pw']]
