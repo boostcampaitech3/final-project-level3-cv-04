@@ -11,7 +11,7 @@ from itertools import chain
 from PIL import ImageOps, Image, ImageDraw, ImageFont
 
 ocr_url = "http://118.222.179.32:30001/ocr/"
-font_path='./tools/fonts/NanumSquareRoundB.ttf'
+font_path='../tools/fonts/NanumSquareRoundB.ttf'
 
 
 

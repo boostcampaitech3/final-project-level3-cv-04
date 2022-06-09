@@ -126,7 +126,7 @@ def output_func(poster):
 	image.save(output, format="JPEG")
 	ocr_img,ann_dict,area_texts = rule.read_img(crop_img,'http://118.222.179.32:30001/ocr/')
 	st.image(ocr_img,caption='ocr Image')
-	st.image(image, caption='after pipeline Image')
+	# st.image(image, caption='after pipeline Image') # seg output
 	id=st.text_input('ID',ret_id)
 	pw=st.text_input('PW',ret_pw)
 	check = st.checkbox('check string')
