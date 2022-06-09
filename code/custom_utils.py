@@ -10,6 +10,7 @@ import math
 import albumentations as A
 import cv2
 import os
+import imutils
 import torch
 import torchvision
 
@@ -117,60 +118,62 @@ def _fast_hist(label_true, label_pred, n_class):
     return hist
 
 
+def slope(x, y):
+    sl = math.sqrt(x**2 + y**2)
+    return sl
+
+
+def get_degree(annos):
+
+    # 제일 대표적인 bbox를 찾음
+    horizontal_list = []
+
+    for idx, anno in enumerate(annos):
+        xlen = anno['points'][1][0] - anno['points'][0][0] # x축 길이 차
+        ylen = anno['points'][0][1] - anno['points'][1][1] # y축 길이 차
+        ylen = abs(ylen)
+        xlen2 = anno['points'][2][0] - anno['points'][1][0] # x축 길이 차
+        xlen2 = abs(xlen2)
+        ylen2 = anno['points'][1][1] - anno['points'][2][1] # y축 길이 차
+        ylen2 = abs(ylen2)
+        horizontal_list.append((slope(xlen,ylen)/slope(xlen2,ylen2), idx, anno["text"],xlen,ylen))
+
+    longest = max(horizontal_list)[1]
+
+    # 각도 계산
+    thetaplus = False
+    xlen = annos[longest]['points'][1][0] - annos[longest]['points'][0][0]
+    ylen = annos[longest]['points'][0][1] - annos[longest]['points'][1][1] # 음수일 수도 있음
+
+    if ylen < 0 :
+        thetaplus = True
+        ylen = abs(ylen)
+
+    costheta = xlen / slope(xlen, ylen)
+    theta = math.acos(costheta)
+    degree = round(theta * 57.29,1)
+
+    if thetaplus == True:
+        degree = degree
+    else:
+        degree = -degree
+
+    return degree
+
+
 def img_rotate(image,mask=None):
-
-    def slope(x, y):
-        sl = math.sqrt(x**2 + y**2)
-        return sl
-
-    def get_degree(annos):
-
-        horizontal_list = []
-
-        for idx, anno in enumerate(annos):
-            xlen = anno['points'][1][0] - anno['points'][0][0] # x축 길이 차 
-            ylen = anno['points'][0][1] - anno['points'][1][1] # y축 길이 차
-            ylen = abs(ylen)
-            horizontal_list.append((slope(xlen,ylen), idx)) # 가로 변 길이 저장
-
-        longest = max(horizontal_list)[1]
-
-        thetaplus = False
-        xlen = annos[longest]['points'][1][0] - annos[longest]['points'][0][0]
-        ylen = annos[longest]['points'][0][1] - annos[longest]['points'][1][1] # 음수일 수도 있음
-
-        if ylen < 0 :
-            thetaplus = True
-            ylen = abs(ylen)
-
-        costheta = max(horizontal_list)[0] / slope(xlen, ylen)
-        theta = math.acos(costheta)
-        degree = round(theta * 57.29,1)
-
-        if thetaplus == True:
-            degree = degree
-        else:
-            degree = -degree
-        return degree
 
     ann_dict = get_ocr(image, "http://118.222.179.32:30001/ocr/")
     annos = ann_dict['ocr']['word']
 
     degree = get_degree(annos)
     
-    func_list = [
-    A.Rotate(p=1.0, limit=[degree,degree],
-    border_mode=cv2.BORDER_CONSTANT
-    ),
-    ]
-    alb_transform = A.Compose(func_list)
-
+    rotated = imutils.rotate_bound(np.array(image), -degree)
     if type(mask) == type(None):
-        transformed = alb_transform(image=np.array(image))
-        return transformed['image']
+        return rotated
     else:
-        transformed = alb_transform(image=np.array(image),mask=mask)
-        return transformed['image'],transformed['mask']
+        r_mask = imutils.rotate_bound(mask, -degree)
+        return rotated, r_mask
 
 
 
