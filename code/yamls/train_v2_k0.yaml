@@ -1,0 +1,31 @@
+# -- path setting
+# python train.py --config yamls/train_v2_k0.yamls
+train_json_path_list : [
+            '../Data set/annotations/train_general_cleaned_v2_k0.json',
+            '../Data set/annotations/gen_ann.json',
+            '../Data set/annotations/train_receipt_cleaned_v2_k0.json'
+        ]
+val_json_path_list : [
+            '../Data set/annotations/test_general_cleaned_v2_k0.json',
+            '../Data set/annotations/test_receipt_cleaned_v2_k0.json'
+        ]
+train_image_path_list : [
+            '../Data set/real data/general',
+            '../Data set/real data/gen_imgs',
+            '../Data set/real data/receipt'
+        ]
+val_image_path_list : [
+            '../Data set/real data/general',
+            '../Data set/real data/receipt'
+        ]
+
+save_path : './saved/v2_k0'
+
+# -- hyperparameter
+epochs : 1000
+batch_size : 8
+lr : 0.0001
+
+# -- validation
+validate : True
+eval_interval : 10

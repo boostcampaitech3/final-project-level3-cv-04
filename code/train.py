@@ -2,7 +2,7 @@ import os
 import argparse
 import yaml
 import torch
-from utils import label_accuracy_score, add_hist
+from custom_utils import label_accuracy_score, add_hist
 import numpy as np
 import pandas as pd
 import numpy as np
