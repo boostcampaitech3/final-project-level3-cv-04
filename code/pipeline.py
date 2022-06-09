@@ -149,6 +149,8 @@ def output_func(poster):
 			crop_img.save(os.path.join(save_path,uploaded_file.name))
 			with open(os.path.join(save_path,f'{file_name}.json'),'w') as f:
 				json.dump(user_dict, f)
+			qr=custom_utils.wifi_qrcode(id,'true','WPA',pw)
+			st.image(qr)
 
 if __name__ == '__main__':
 	with st.sidebar:
