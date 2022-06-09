@@ -58,12 +58,14 @@ def bbox_concat(bbox_list):
 				tmp = n[2][0]
 		line.append(word)
 		word = []
-	s='None'
+	
+	out = []
 	for i in line:
 		s = "".join(i)
 		print(s)
+		out.append(s)
 
-	return s
+	return out
 
 
 def get_3chanel_key_masked_image(image,ocr,img_path):
@@ -105,13 +107,18 @@ def pipeline(img,model,device):
 		t_ocr_list.append((transformed['image'],(texts,location['points'])))
 	model.to(device)
 	pred = model(x.unsqueeze(0).to(device))[0]
-
+	
 	### 6. segmentation map + mask_list --> id, pw value classification list ###
 	classificated_image,out_list = custom_utils.seg_to_classification(pred,t_ocr_list,device)
-	
+
+	if out_list['id']:
+		out_list['id'] = bbox_concat(out_list['id'])
+	if out_list['pw']:
+		out_list['pw'] = bbox_concat(out_list['pw'])
+
 	fin_out = {}
-	fin_out['id'] = [out[0] for out in out_list['id']]
-	fin_out['pw'] = [out[0] for out in out_list['pw']]
+	fin_out['id'] = [out for out in out_list['id']]
+	fin_out['pw'] = [out for out in out_list['pw']]
 
 	return classificated_image,fin_out['id'],fin_out['pw'],Image.fromarray(custom_utils.img_rotate(image_3c).astype('uint8'), 'RGB')
 
@@ -144,9 +151,9 @@ if __name__ == '__main__':
 
 	if uploaded_file:
 		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-		seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
-		seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
-		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+		seg_model = torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/model.pt')
+		seg_model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/540.pt'))
+		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/upstage_OCR/code/saved/yolov5s_wifi_det.pt')
 		input_img=Image.open(io.BytesIO(uploaded_file.getvalue()))
 		result = det_model(input_img)
 		result.display(render=False)	
