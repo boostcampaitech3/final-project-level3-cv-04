@@ -177,32 +177,32 @@ def img_rotate(image,mask=None):
 
 
 
-def seg_to_classification(image:torch.tensor,mask_list,device):
+def seg_to_classification(image:torch.tensor,mask_list,device): # image = pred img(background(softmax 값),id_val,pw_val), mask_list = (mask+trans_img,(text,point))
     out = {'id':[],'pw':[]}
     c1,c2,c3 = image
     n_c1 = torch.ones(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
     n_c2 = torch.zeros(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
     n_c3 = torch.zeros(1,c1.shape[0],c1.shape[1],requires_grad=True).to(device)
-    for mask,text in mask_list:
-        mask = mask[0]
+    for mask,text in mask_list: 
+        mask = mask[0] # 0~1 mask resize
         dic = {}
-        dic[0] = sum(c1[mask == 1].data)
-        dic[1] = sum(c2[mask == 1].data)
-        dic[2] = sum(c3[mask == 1].data)
+        dic[0] = sum(c1[mask == 1].data) # 배경 확률의 합
+        dic[1] = sum(c2[mask == 1].data) # id_val 확률의 합
+        dic[2] = sum(c3[mask == 1].data) # pw_val 확률의 합 
         ratio_dic = {}
         if sum([dic[0],dic[1],dic[2]]) == 0:
             continue
-        ratio_dic[0] = dic[0]/sum([dic[0],dic[1],dic[2]])
-        ratio_dic[1] = dic[1]/sum([dic[0],dic[1],dic[2]])
+        ratio_dic[0] = dic[0]/sum([dic[0],dic[1],dic[2]]) # 마스크의 확률 계산 
+        ratio_dic[1] = dic[1]/sum([dic[0],dic[1],dic[2]]) # dict 의 key 값으로 확률을 저장
         ratio_dic[2] = dic[2]/sum([dic[0],dic[1],dic[2]])
         n_c1[0][mask == 1] = ratio_dic[0]
-        n_c2[0][mask == 1] = ratio_dic[1]
+        n_c2[0][mask == 1] = ratio_dic[1] # 확률순으로 정렬 
         n_c3[0][mask == 1] = ratio_dic[2]
-        if sorted(ratio_dic.items(), key = lambda item: item[1])[-1][0] == 1:
+        if sorted(ratio_dic.items(), key = lambda item: item[1])[-1][0] == 1: # 만약 마스크 안의 글자가 id일 확률이 가장 높고 key 값이 높으면 해당 글자를 id에 추가해서 리턴
             out['id'].append(text)
         elif sorted(ratio_dic.items(), key = lambda item: item[1])[-1][0] == 2:
             out['pw'].append(text)
-    new_image = torch.cat((n_c1,n_c2,n_c3),dim=0)
+    new_image = image+torch.cat((n_c1,n_c2,n_c3),dim=0)
 
     return new_image,out
 
@@ -261,24 +261,25 @@ def get_ocr(img_path,api_url:str) -> dict:
 
 
 def ocr_to_coco(ocr_result,image_path,image_shape:tuple) -> COCO:
-    coco_dict = {
-        'images':[{'filename':image_path,'height': image_shape[0],'width': image_shape[1],'id': 0}],
-        'categories':[{'id':1,"name": "text"}],
-        'annotations':[]
-    }
+	image_path='None'
+	coco_dict = {
+		'images':[{'filename':image_path,'height': image_shape[0],'width': image_shape[1],'id': 0}],
+		'categories':[{'id':1,"name": "text"}],
+		'annotations':[]
+	}
 
-    for i,box in enumerate(ocr_result['ocr']['word']):
-        coco_dict['annotations'].append({
-            'id':i,
-            'image_id':0,
-            'category_id':1,
-            'text': box['text'],
-            'segmentation': [[]]
-        })
-        for point in box['points']:
-            coco_dict['annotations'][-1]['segmentation'][0] += point
+	for i,box in enumerate(ocr_result['ocr']['word']):
+		coco_dict['annotations'].append({
+			'id':i,
+			'image_id':0,
+			'category_id':1,
+			'text': box['text'],
+			'segmentation': [[]]
+		})
+		for point in box['points']:
+			coco_dict['annotations'][-1]['segmentation'][0] += point
 
-    return Custom_COCO(coco_dict)
+	return Custom_COCO(coco_dict)
 
 
 def coco_to_mask(coco,image_size:tuple,key_list =None,get_each_mask=True) -> torch.tensor:
