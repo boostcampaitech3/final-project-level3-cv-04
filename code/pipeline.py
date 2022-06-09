@@ -17,6 +17,7 @@ import requests
 import io
 import rule_based_method as rule
 import json
+
 def bbox_concat(bbox_list):
 	texts = []
 	for ind, anno in enumerate(bbox_list):
@@ -132,7 +133,7 @@ def output_func(poster):
 	image.save(output, format="JPEG")
 	ocr_img,ann_dict,area_texts = rule.read_img(crop_img,'http://118.222.179.32:30001/ocr/')
 	st.image(ocr_img,caption='ocr Image')
-	st.image(image, caption='after pipeline Image')
+	# st.image(image, caption='after pipeline Image') # seg output
 	id=st.text_input('ID',ret_id)
 	pw=st.text_input('PW',ret_pw)
 	check = st.checkbox('check string')
@@ -150,10 +151,11 @@ if __name__ == '__main__':
 		uploaded_file = st.file_uploader("img",type=['png','jpg','jpeg'])
 
 	if uploaded_file:
-		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'
 		seg_model = torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/model.pt')
 		seg_model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/c1_k0/540.pt'))
 		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/upstage_OCR/code/saved/yolov5s_wifi_det.pt')
+
 		input_img=Image.open(io.BytesIO(uploaded_file.getvalue()))
 		result = det_model(input_img)
 		result.display(render=False)	
