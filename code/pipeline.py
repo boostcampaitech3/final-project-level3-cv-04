@@ -44,7 +44,7 @@ def bbox_concat(bbox_list):
 	align.append(phase) # 마지막 줄 추가
 
 
-	print("--------------------")
+	# print("--------------------")
 	line = []
 	word = []
 	for i in align:
@@ -63,7 +63,7 @@ def bbox_concat(bbox_list):
 	out = []
 	for i in line:
 		s = "".join(i)
-		print(s)
+		# print(s)
 		out.append(s)
 
 	return out
@@ -74,7 +74,7 @@ def get_3chanel_key_masked_image(image,ocr,img_path):
 	c2 = custom_utils.coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=False)
 	c3 = custom_utils.coco_to_mask(ocr_coco,image.shape,key_list=dataset.key_list,get_each_mask=False)
 	_,mask_list = custom_utils.coco_to_mask(ocr_coco,image.shape,key_list=None,get_each_mask=True)
-	print(torch.tensor(image).unsqueeze(0).shape)
+	# print(torch.tensor(image).unsqueeze(0).shape)
 	return torch.cat((torch.tensor(image).unsqueeze(0),c2,c3),dim=0), mask_list
 
 
@@ -151,6 +151,12 @@ def output_func(poster):
 				json.dump(user_dict, f)
 			qr=custom_utils.wifi_qrcode(id,'true','WPA',pw)
 			st.image(qr)
+@st.cache
+def init_func():
+		seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
+		seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
+		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+		return seg_model,det_model
 
 if __name__ == '__main__':
 	with st.sidebar:
@@ -158,11 +164,11 @@ if __name__ == '__main__':
 
 	if uploaded_file:
 		device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-		seg_model = torch.load('/opt/ml/upstage_OCR/code/saved/seg_model/model.pt')
-		seg_model.load_state_dict(torch.load('/opt/ml/upstage_OCR/code/saved/seg_model/seg_c1_k2.pt'))
-		det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/upstage_OCR/code/saved/det_model/yolov5s_wifi_det.pt')
-
+		
+		# st.session_state.seg_model = torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/model.pt')
+		# st.session_state.seg_model.load_state_dict(torch.load('/opt/ml/final-project-level3-cv-04/code/saved/seg_model/540_80.4.pt'))
+		# st.session_state.det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='/opt/ml/yolov5/runs/train/exp7/weights/best.pt')
+		seg_model,det_model=init_func()
 
 		input_img=Image.open(io.BytesIO(uploaded_file.getvalue()))
 		result = det_model(input_img)
