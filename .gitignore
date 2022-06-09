@@ -1,0 +1,7 @@
+*.out
+
+code/__pycache__
+code/saved
+code/out
+
+Data set/dataset
