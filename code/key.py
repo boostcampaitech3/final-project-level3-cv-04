@@ -49,7 +49,7 @@ for key in key_list:
         new_list.append(key)
         key = keytmp
 
-new_list = list(set(new_list)) +  [':', '/']
+new_list = list(set(new_list)) +  ['/']
     
 general_cleansing_list_v2 = [0, 11, 12, 14, 23, 26, 27, 28, 30, 32, 33, 45, 47, 48, 52, 64, 69, 70, 72, 74, 75, 77, 84, 87, 91, 93, 95, 111,
 146, 149, 156, 157, 194, 198, 201, 202, 207, 209, 230 ]
