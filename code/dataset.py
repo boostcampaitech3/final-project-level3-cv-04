@@ -13,7 +13,7 @@ from custom_utils import get_ocr, ocr_to_coco, coco_to_mask
 
 import key
 
-key_list = key.key_list2
+key_list = key.new_list
 
 class WifiDataset_segmentation(Dataset):
     def __init__(self,ann_path,api_url,image_root,transform,mode = "train") -> None:
