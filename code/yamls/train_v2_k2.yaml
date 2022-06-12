@@ -1,6 +1,10 @@
 # -- path setting
 # python train.py --config yamls/train_v2_k2.yamls
 # nohup python -u train.py --config yamls/train_v2_k2.yaml 
+# 
+# ps -es # 시간 확인
+# kill -9 26474 # 종료
+
 train_json_path_list : [
             '../Data set/annotations/train_general_cleaned_v2_k2.json',
             '../Data set/annotations/gen_ann.json',
@@ -23,7 +27,7 @@ val_image_path_list : [
 save_path : './saved/v2_k2'
 
 # -- hyperparameter
-epochs : 1000
+epochs : 2000
 batch_size : 4
 lr : 0.0001
 
