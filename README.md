@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to MODU <img src="https://raw.githubusercontent.com/MartinHeinz/MartinHeinz/master/wave.gif" width="48px"></h1>
+<h1 align="center">Welcome to Wi-FiNDER <img src="https://raw.githubusercontent.com/MartinHeinz/MartinHeinz/master/wave.gif" width="48px"></h1>
 <p>
 </p>
 <center>
