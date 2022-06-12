@@ -2,7 +2,7 @@
 <p>
 </p>
 <center>
-    <img src="./README.assets/logo.png" alt="Wifinder" style="zoom:76%;" align="center"/>
+    <img src="./README.assets/wi-finder.png" alt="Wifinder" style="zoom:76%;" align="center"/>
 </center>
 
 
