@@ -67,6 +67,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/crawling.png" alt="WifiNDER"/>
 </center>
+
 > 다양한 플랫폼에서 WiFi 정보를 담은 이미지 데이터 수집 후 cleansing 실시
 
 <br>
@@ -76,6 +77,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/template1.png" alt="WifiNDER"/>
 </center>
+
 > WiFi template 이미지에 랜덤한 문자열을 ID, PW의 위치에 넣어 합성 이미지 생성
 
 <br>
@@ -85,6 +87,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/unity1.png" alt="WifiNDER"/>
 </center>
+
 > Unity를 이용해 가상 현실로 구현한 카페 Scene에 WiFi 포스터를 다양한 위치에 두고 여러 구도에서 이미지 생성
 
 <br>
@@ -94,6 +97,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/annotation.png" alt="WifiNDER"/>
 </center>
+
 > CVAT Annotation Tool을 활용해 `WiFi Logo`, `WiFi poster`, `ID`, `PW` 에 대한 annotation 진행
 
 <br>
@@ -112,6 +116,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center style: "">
     <img src="./README.assets/annotation1.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > WiFi Logo와 WiFi Poster를 annotation한 데이터로 학습
 
 ### 2. poster detection
@@ -119,6 +124,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/yolo_output.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > WiFi Logo가 포함되어 있는 Poster를 detect하고, 해당 영역을 crop하여 사용
 
 <br>
@@ -132,6 +138,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/annotation2.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > WiFi ID와 WiFi PW를 annotation한 데이터로 학습
 
 ### 2. 3-channel input
@@ -139,6 +146,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/3channel.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > ch1: gray scale이 적용된 image
 
 > ch2: 모든 text 위치의 masking image
@@ -154,6 +162,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/scrap_aug.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > Blur, ShiftScaleRotate 를 통해 이미지 데이터 증강
 
 - Template Data
@@ -161,6 +170,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/template_aug.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > Real Data에 비해 너무 깨끗한 정면 이미지이므로 MotionBlur, ElasticTransform 를 통해 noise 생성
 
 ### 4. input & output & matching
@@ -168,6 +178,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/seg_matching.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > input, output과 output을 ocr bbox와 matching 한 결과
 
  `id`, `pw`를 key값으로 지니고 있으며, 각각 text 값과 bbox 위치정보를 담아 post processing에 활용
