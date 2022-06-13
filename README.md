@@ -23,7 +23,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 사용자가 보다 빠르고 편리하게 WiFi 연결을 할 수 있게 해주는 서비스 입니다.
 ```
 
-
+<br>
 
 
 
@@ -38,7 +38,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 특히 많은 Text가 담겨있는 영수증에서도 WiFi ID, PW를 빠르게 추출할 수 있습니다.
 ```
 
-
+<br>
 
 
 
@@ -48,7 +48,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
     <img src="./README.assets/schedule.png" alt="WifiNDER"  align="center"/>
 </center>
 
-
+<br>
 
 
 
@@ -58,7 +58,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
     <img src="./README.assets/pipeline.png" alt="WifiNDER"  align="center"/>
 </center>
 
-
+<br>
 
 
 ## 🗂 Dataset
@@ -68,18 +68,18 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/crawling.png" alt="WifiNDER"/>
 </center>
+
 > 다양한 플랫폼에서 WiFi 정보를 담은 이미지 데이터 수집 후 cleansing 실시
 
-<br>
 
 ### 2. WiFi template
 
 <center>
     <img src="./README.assets/template1.png" alt="WifiNDER"/>
 </center>
+
 > WiFi template 이미지에 랜덤한 문자열을 ID, PW의 위치에 넣어 합성 이미지 생성
 
-<br>
 
 ### 3. Unity
 
@@ -89,13 +89,13 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 
 > Unity를 이용해 가상 현실로 구현한 카페 Scene에 WiFi 포스터를 다양한 위치에 두고 여러 구도에서 이미지 생성
 
-<br>
 
 ### 4. Data Annotation
 
 <center>
     <img src="./README.assets/annotation.png" alt="WifiNDER"/>
 </center>
+
 > CVAT Annotation Tool을 활용해 `WiFi Logo`, `WiFi poster`, `ID`, `PW` 에 대한 annotation 진행
 
 <br>
@@ -114,6 +114,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center style: "">
     <img src="./README.assets/annotation1.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > WiFi Logo와 WiFi Poster를 annotation한 데이터로 학습
 
 ### 2. poster detection
@@ -121,6 +122,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/yolo_output.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > WiFi Logo가 포함되어 있는 Poster를 detect하고, 해당 영역을 crop하여 사용
 
 <br>
@@ -134,6 +136,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/annotation2.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > WiFi ID와 WiFi PW를 annotation한 데이터로 학습
 
 ### 2. 3-channel input
@@ -141,6 +144,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/3channel.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > ch1: gray scale이 적용된 image
 
 > ch2: 모든 text 위치의 masking image
@@ -156,6 +160,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/scrap_aug.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > Blur, ShiftScaleRotate 를 통해 이미지 데이터 증강
 
 - Template Data
@@ -163,6 +168,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/template_aug.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > Real Data에 비해 너무 깨끗한 정면 이미지이므로 MotionBlur, ElasticTransform 를 통해 noise 생성
 
 ### 4. input & output & matching
@@ -170,6 +176,7 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 <center>
     <img src="./README.assets/seg_matching.png" alt="WifiNDER"  align="center"/>
 </center>
+
 > input, output과 output을 ocr bbox와 matching 한 결과
 
  `id`, `pw`를 key값으로 지니고 있으며, 각각 text 값과 bbox 위치정보를 담아 post processing에 활용
@@ -192,7 +199,6 @@ Wi-FiNDER는 WiFi Image가 들어왔을 때 ID와 PW 값을 추출하여
 
 OCR엔진의 글자인식 성능향상, 각각의 bbox로 잡던 것들을 한번에 잡아 Post-Processing하기 용이
 
-<br>
 
 ### 2. Image Padding
 
@@ -222,7 +228,6 @@ UNet 모델 학습시 Input은 512x512의 크기로 고정 -> 3:4의 비율로 R
 
 > 같은 라인 bbox 좌하단 지점의 y좌표를 기준으로 text size를 비교해 글자 순서에 맞게 출력
 
-<br>
 
 ### 2. Word Merge (X-axis)
 
@@ -232,7 +237,6 @@ UNet 모델 학습시 Input은 512x512의 크기로 고정 -> 3:4의 비율로 R
 
 > 같은 라인의 글씨는 유사한 크기라 가정하고, 자간이 x좌표 길이의 1/2보다 작을 경우 같은 글씨로 출력
 
-<br>
 
 ### 3. Final postprocessing
 
