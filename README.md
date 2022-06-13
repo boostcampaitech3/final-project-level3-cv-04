@@ -295,7 +295,7 @@ $ steamlit run rule_based_method.py
 
 ## 🤼‍♂️Author
 
-🐯**[Roh Hyunsuk](https://github.com/titiman1013)**
+🐯 **[Roh Hyunsuk](https://github.com/titiman1013)**
 
 🐶 **[Shin Hyeonghwan](https://github.com/vhehduatks)**
 
