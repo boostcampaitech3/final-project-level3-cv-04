@@ -2,7 +2,7 @@
 # python train.py --config yamls/train_v2_k2.yamls
 # nohup python -u train.py --config yamls/train_v2_k2.yaml 
 # 
-# ps -es # 시간 확인
+# ps -ef # 시간 확인
 # kill -9 26474 # 종료
 
 train_json_path_list : [

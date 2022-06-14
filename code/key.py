@@ -10,13 +10,13 @@
 
 # ----------------------------------------------------------------
 
-key_list3_general = ["와이파이명", "1층", "2층", "3층", "4층", "(WI-FI", "WI-FI)", "패스워드", 
+key_list3_general = ["와이파이명", "1층", "2층", "3층", "4층", "(WI-FI)", "패스워드", 
 "ID", "PW", "1·2층", "FREE", "WI-FI", "WIFI", "ZONE", "무선",
 "인터넷", "WITI", "AP", "PASSWORD", "와이파이", "비밀번호", "WIF", "PASSWOR", "PA",
 "SSWORD", "아이디", "비번", "DW", "WF", "WI", "★PASSWORD", "★PASSWORD★",
 "I-FI", "PASSWO", "WIFI(와이", "WIFI(와이파이)", "PASSWORE", "네트워크", "WI",
 "WI-FIZONE", "SSID", "W:", "D:", "PASS", "1F", "2F", "3F", "4F", 
-"검색명칭", "패스워트", "P/W", "WI-FI(ID)", "I'D:", "PN:", "P.W", "WI-FIZONE", "무선랜",
+"검색명칭", "패스워트", "P/W", "WI-FI(ID)", "I'D:", "PN", "P.W", "WI-FIZONE", "무선랜",
 "5G전용", "POSSWORD", "POSS", "WORD", "무선랜명:", "FI", "KEY", "계정", "WIFT", "WTFI",
 "WTFT", "P.W.", "FW", "IP", "와이", "파이", "이파이", "와이파",
 "PIN", "WI-F",  "IFI", "NAME", "WORD", "WIFIID", "NETWORK"]
@@ -24,19 +24,19 @@ key_list3_general = ["와이파이명", "1층", "2층", "3층", "4층", "(WI-FI"
 key_list3_receipt = ["WIF", "PASSWORD]", "SWORD", "PAS", "WIFI아이디는", "비밀번호는", "무선인터넷은",
 "무선인터넷", "WIFI아이디", "WIFI비밀번호", "WIP", "WIPI",
 "W:", "IF", "와이파이P/W", "P/Ø", "FI비밀번호", "IFI비밀번호", "W1TI", "W1T1", "WIT1",
-"W1", "T1", "Wㅣ", "Fㅣ", "PASSWARD", "ACCESS", "CODE", "I-FI", "-FI", "FI:", "PASS", "PASS:",
-"1D", "이름", "WIFIPASSWORD", "[와이파", "OI] ", "[와이파이]", "I아이디", "PIII", "1/D", "무선", "무선랜", "P.W",
-"P.\\", "IFI", "\\IFI", "FI비밀번호", "WI-F1", "W1F1", "B1층", "1층,2층", "P.", "<WI-FI>", "ID:KT", "무료",
+"W1", "T1", "Wㅣ", "Fㅣ", "PASSWARD", "ACCESS", "CODE", "I-FI", "-FI", "PASS",
+"1D", "이름", "WIFIPASSWORD", "[와이파", "OI", "[와이파이]", "I아이디", "PIII", "1/D", "무선", "무선랜", "P.W",
+"P.\\", "IFI", "\\IFI", "FI비밀번호", "WI-F1", "W1F1", "B1층", "1층,2층", "P.", "<WI-FI>", "무료",
 "W:", "III", "WIII", "DW", "PWI", "이비번", "와이파이비번", "파이비번",
-"SSWOR", "F/W:", "PASSW", "ORD", "ID/PASSWORD", 
+"SSWOR", "F/W", "PASSW", "ORD", "ID/PASSWORD", 
 "1층WIFI", "2층WIFI", "3층WIFI", "WI+I", "네트워크명", "-WI-FI-", "WI-I", 
-"RD", "WIT1", "D)", "W)", "WIFI-PASSWORD", "F/W",
-"P.", "P.W", "비밀번",  "W1-F1", "W1-F1", "무선와이파이", "이디", "II)",
-"비일번호", "번호", "PA",  "WIT", "와이파이비번:", "PB:", "PIPI",
+"RD", "WIT1", "D)", "W)", "WIFI-PASSWORD",
+"P.", "비밀번",  "W1-F1", "W1-F1", "무선와이파이", "이디", "II)",
+"비일번호", "번호", "PA",  "WIT", "PB", "PIPI",
 "WIFI명", "·FI", "WI·FI", "비밀번오", "WIFE", "I-", "PIII", "WIRI"]
 
 key_list = key_list3_general + key_list3_receipt
-seperater = [':','.','_',"-","<",">","ㅣ","L","I","/","(",")", "'", "[","]","*",""]
+seperater = [':','.','_',"-","<",">","ㅣ","L","I","/","(",")", "'", "[","]","*","1",""]
 
 new_list = []
 for key in key_list:
@@ -49,7 +49,7 @@ for key in key_list:
         new_list.append(key)
         key = keytmp
 
-new_list = list(set(new_list)) + [':','/']
+new_list = list(set(new_list))
     
 
     
