@@ -41,7 +41,7 @@ def post_process(id_lists, pw_lists):
         out_pw = delete_korean(out_pw)
         out_pw = split_str(out_pw)
 
-        if len(out_pw) >= 5:
+        if len(out_pw) >= 8: # 8자리 미만 비밀번호 제외
             p = re.compile('\w\s') # 'L ', 'ㅣ ' 등의 형태
             m = p.match(out_pw[0:2])
             if m:
