@@ -137,6 +137,7 @@ def output_func(poster):
 	except:
 		return True
 	
+	
 
 	ret_img=torchvision.transforms.ToPILImage()(ret_img) 
 	output = io.BytesIO()
@@ -147,11 +148,13 @@ def output_func(poster):
 	# st.image(image, caption='after pipeline Image') # seg output
 	ret_id = ", ".join(ret_id)
 	ret_pw = ", ".join(ret_pw)
-
+	
+	st.info('텍스트 수정 후 Enter')
 	id=st.text_input('ID',ret_id)
 	pw=st.text_input('PW',ret_pw)
 	# check = st.checkbox('check string')
 	# if check:
+	
 	if st.button('QR code'):
 		save_path='./user_data'
 		user_dict={'user_anno_id':id,'user_anno_pw':pw}
@@ -196,6 +199,8 @@ if __name__ == '__main__':
 				posters.append(crop)
 			else:
 				logos.append(crop)
+		if not posters:
+			st.error('detection error(wifi poster)')
 
 		for poster in posters:	
 			poster_upx=poster['box'][0].item()
@@ -214,8 +219,10 @@ if __name__ == '__main__':
 
 			if not logos:
 				output_error=output_func(poster)
+			
 		if output_error:
-			st.warning('OCR 결과가 없습니다')
+			st.error('OCR error')
+		
 		end=time.time()
 		st.write(end-start)
 
