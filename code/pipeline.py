@@ -91,8 +91,7 @@ def pipeline(img,model,device):
 	
 	### 3. get ocr ###
 	ocr = custom_utils.get_ocr(Image.fromarray(image),"http://118.222.179.32:30001/ocr/")
-	if not ocr: 
-		return  0,-1,-1,-1
+
 	### 4. get key masked image, each mask list ###
 	x, mask_list = get_3chanel_key_masked_image(image,ocr,'None')     # x:torch.tensor
 	PIL_transform =torchvision.transforms.ToPILImage()
@@ -105,11 +104,15 @@ def pipeline(img,model,device):
 			])
 	x = t(image = np.array(x))['image'].type(torch.FloatTensor)         # x:torch.tensor
 	t_ocr_list = []
-	for (mask,texts),location in zip(mask_list,ocr['ocr']['word']):
-		transformed = t(image=np.array(mask))
-		t_ocr_list.append((transformed['image'],(texts,location['points'])))
-	model.to(device)
-	pred = model(x.unsqueeze(0).to(device))[0]
+	try:
+		for (mask,texts),location in zip(mask_list,ocr['ocr']['word']):
+			transformed = t(image=np.array(mask))
+			t_ocr_list.append((transformed['image'],(texts,location['points'])))
+		model.to(device)
+		pred = model(x.unsqueeze(0).to(device))[0]
+	except:
+		raise Exception('ocr error')
+
 	
 	### 6. segmentation map + mask_list --> id, pw value classification list ###
 	classificated_image,out_list = custom_utils.seg_to_classification(pred,t_ocr_list,device)
@@ -129,9 +132,12 @@ def pipeline(img,model,device):
 def output_func(poster):
 	st.write(uploaded_file.name)
 	poster=poster['im'][:,:,::-1] #BGR -> RGB
-	ret_img,ret_id,ret_pw,crop_img=pipeline(poster,seg_model,device) # ret_img : Tensor
-	if not ret_img:
+	try:
+		ret_img,ret_id,ret_pw,crop_img=pipeline(poster,seg_model,device) # ret_img : Tensor	
+	except:
 		return True
+	
+
 	ret_img=torchvision.transforms.ToPILImage()(ret_img) 
 	output = io.BytesIO()
 	image = ret_img
