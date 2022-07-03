@@ -2,7 +2,9 @@
 <p>
 </p>
 <center>
-    <img src="./README.assets/logo.png" alt="Wifinder" style="zoom:25%;" align="center"/>
+
+    <img src="./README.assets/wi-finder.png" alt="Wifinder" style="zoom:76%;" align="center"/>
+
 </center>
 
 
@@ -312,6 +314,5 @@ $ steamlit run rule_based_method.py
 
 ## 📝 License
 
-Copyright © 2022  Sauron's eyes  
+Copyright © 2022  Sauron's eyes  <br>
 
-<br>
