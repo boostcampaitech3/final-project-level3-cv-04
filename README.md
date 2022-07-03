@@ -1,10 +1,8 @@
-<h1 align="center">Welcome to Wi-FiNDER <img src="https://raw.githubusercontent.com/MartinHeinz/MartinHeinz/master/wave.gif" width="48px"></h1>
+<h1 align="center">Welcome to Wi-FiNDER <img src="https://raw.githubusercontent.com/MartinHeinz/MartinHeinz/master/wave.gif" width="24px"></h1>
 <p>
 </p>
 <center>
-
-    <img src="./README.assets/logo.png" alt="Wifinder" style="zoom:76%;" align="center"/>
-
+    <img src="./README.assets/logo.png" alt="Wifinder" style="zoom:25%;" align="center"/>
 </center>
 
 
